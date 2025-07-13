@@ -74,7 +74,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>telemetry.collector.ru.yandex.practicum.telemetry.collector.CollectorApplication</mainClass>
+                    <mainClass>ru.yandex.practicum.telemetry.collector.CollectorApplication</mainClass>
                 </configuration>
             </plugin>
         </plugins>
