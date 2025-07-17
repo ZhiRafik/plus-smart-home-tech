@@ -1,27 +1,26 @@
-package ru.yandex.practicum.telemetry.collector.service;
+package ru.yandex.practicum.telemetry.collector.handler;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ru.yandex.practicum.telemetry.collector.mapper.HubEventMapper;
-import ru.yandex.practicum.telemetry.collector.model.hub.HubEvent;
 import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
+import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
 import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
+import ru.yandex.practicum.telemetry.collector.mapper.HubEventMapper;
 
 @Slf4j
-@Service
+@Component
 @RequiredArgsConstructor
-public class HubEventServiceImpl implements HubEventService {
-
+public class DeviceRemovedHandler implements HubEventHandler {
     private static final String TOPIC = "telemetry.hubs.v1";
 
     private final Producer<String, SpecificRecordBase> producer;
 
     @Override
-    public void collect(HubEvent hubEvent) {
-        HubEventAvro avroEvent = HubEventMapper.mapToAvro(hubEvent);
+    public void handle(HubEventProto proto) {
+        HubEventAvro avroEvent = HubEventMapper.mapToAvro(proto);
 
         ProducerRecord<String, SpecificRecordBase> record = new ProducerRecord<>(
                 TOPIC,
@@ -37,5 +36,10 @@ public class HubEventServiceImpl implements HubEventService {
                         metadata.topic(), metadata.partition(), metadata.offset());
             }
         });
+    }
+
+    @Override
+    public HubEventProto.PayloadCase getMessageType() {
+        return HubEventProto.PayloadCase.DEVICE_REMOVED;
     }
 }

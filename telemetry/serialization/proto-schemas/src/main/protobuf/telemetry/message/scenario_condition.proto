@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package telemetry.message.event;
+
+option java_multiple_files = true;
+option java_package = "ru.yandex.practicum.grpc.telemetry.event";
+
+import "telemetry/message/enums/condition_type.proto";
+import "telemetry/message/enums/condition_operation.proto";
+
+message ScenarioConditionProto {
+  string sensor_id = 1;
+  telemetry.message.enums.ConditionTypeProto type = 2;
+  telemetry.message.enums.ConditionOperationProto operation = 3;
+  oneof value {
+    bool bool_value = 4;
+    int32 int_value = 5;
+  }
+}

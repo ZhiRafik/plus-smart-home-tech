@@ -1,27 +1,27 @@
-package ru.yandex.practicum.telemetry.collector.service;
+package ru.yandex.practicum.telemetry.collector.handler;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ru.yandex.practicum.telemetry.collector.mapper.SensorEventMapper;
-import ru.yandex.practicum.telemetry.collector.model.sensor.SensorEvent;
 import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
+import ru.yandex.practicum.grpc.telemetry.event.SensorEventProto;
 import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
+import ru.yandex.practicum.telemetry.collector.mapper.SensorEventMapper;
 
 @Slf4j
-@Service
+@Component
 @RequiredArgsConstructor
-public class SensorEventServiceImpl implements SensorEventService {
+public class SwitchSensorEventHandler implements SensorEventHandler {
 
     private static final String TOPIC = "telemetry.sensors.v1";
 
     private final Producer<String, SpecificRecordBase> producer;
 
     @Override
-    public void collect(SensorEvent sensorEvent) {
-        SensorEventAvro avroEvent = SensorEventMapper.mapToAvro(sensorEvent);
+    public void handle(SensorEventProto proto) {
+        SensorEventAvro avroEvent = SensorEventMapper.mapToAvro(proto);
 
         ProducerRecord<String, SpecificRecordBase> record = new ProducerRecord<>(
                 TOPIC,
@@ -38,5 +38,9 @@ public class SensorEventServiceImpl implements SensorEventService {
             }
         });
     }
-}
 
+    @Override
+    public SensorEventProto.PayloadCase getMessageType() {
+        return SensorEventProto.PayloadCase.SWITCH_SENSOR_EVENT;
+    }
+}

@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package telemetry.message.event;
+
+option java_multiple_files = true;
+option java_package = "ru.yandex.practicum.grpc.telemetry.event";
+
+import "telemetry/message/enums/action_type.proto";
+
+message DeviceActionProto {
+  string sensor_id = 1; // идентификатор устройства
+  telemetry.message.enums.ActionTypeProto type = 2;
+  optional int32 value = 3;
+}
