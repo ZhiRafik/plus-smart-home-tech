@@ -132,7 +132,7 @@ public class HubEventMapper {
                                 .setSensorId(c.getSensorId())
                                 .setType(ConditionTypeAvro.valueOf(c.getType().name()))
                                 .setOperation(ConditionOperationAvro.valueOf(c.getOperation().name()))
-                                .setValue(c.getIntValue())
+                                .setValue(c.getValueCase())
                                 .build())
                         .toList();
 
