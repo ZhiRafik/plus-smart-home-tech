@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package telemetry.message.event;
+
+option java_multiple_files = true;
+option java_package = "ru.yandex.practicum.grpc.telemetry.event";
+
+message MotionSensorProto {
+  int32 link_quality = 1; // показатель качества связи; чем выше значение, тем лучше качество связи
+  bool motion = 2;        // указание на наличие движения или чьего-то присутствия
+  int32 voltage = 3;      // значение напряжения, которое может использоваться для оценки текущего напряжения в сенсоре или связанном устройстве
+}

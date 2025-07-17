@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package telemetry.message.enums;
+
+option java_multiple_files = true;
+option java_package = "ru.yandex.practicum.grpc.telemetry.event.enums";
+
+enum ConditionOperationProto {
+  EQUALS = 0;
+  GREATER_THAN = 1;
+  LOWER_THAN = 2;
+}
