@@ -128,12 +128,20 @@ public class HubEventMapper {
                 ScenarioAddedEventProto e = proto.getScenarioAdded();
 
                 List<ScenarioConditionAvro> conditions = e.getConditionList().stream()
-                        .map(c -> ScenarioConditionAvro.newBuilder()
-                                .setSensorId(c.getSensorId())
-                                .setType(ConditionTypeAvro.valueOf(c.getType().name()))
-                                .setOperation(ConditionOperationAvro.valueOf(c.getOperation().name()))
-                                .setValue(c.getValueCase())
-                                .build())
+                        .map(c -> {
+                            ScenarioConditionAvro.Builder b = ScenarioConditionAvro.newBuilder()
+                                    .setSensorId(c.getSensorId())
+                                    .setType(ConditionTypeAvro.valueOf(c.getType().name()))
+                                    .setOperation(ConditionOperationAvro.valueOf(c.getOperation().name()));
+
+                            switch (c.getValueCase()) {
+                                case BOOL_VALUE   -> b.setValue(c.getBoolValue());
+                                case INT_VALUE    -> b.setValue(c.getIntValue());
+                                default -> throw new IllegalArgumentException(
+                                        "Unsupported value type: " + c.getValueCase());
+                            }
+                            return b.build();
+                        })
                         .toList();
 
                 List<DeviceActionAvro> actions = e.getActionList().stream()
