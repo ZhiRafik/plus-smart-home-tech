@@ -25,7 +25,7 @@ public class LightSensorEventHandler implements SensorEventHandler {
 
         ProducerRecord<String, SpecificRecordBase> record = new ProducerRecord<>(
                 TOPIC,
-                avroEvent.getId(),
+                avroEvent.getId().toString(),
                 avroEvent
         );
 

@@ -13,7 +13,7 @@ import ru.yandex.practicum.telemetry.aggregator.service.AggregatorService;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import ru.yandex.practicum.telemetry.collector.config.KafkaProducerConfig;
+
 
 import java.time.Duration;
 import java.util.List;
@@ -55,7 +55,7 @@ public class AggregationStarter implements Runnable {
                     maybeSnapshot.ifPresent(snapshot -> {
                         ProducerRecord<String, SensorsSnapshotAvro> outRecord = new ProducerRecord<>(
                                 "telemetry.snapshots.v1",
-                                snapshot.getHubId(),
+                                snapshot.getHubId().toString(),
                                 snapshot
                         );
                         producer.send(outRecord, (metadata, ex) -> {

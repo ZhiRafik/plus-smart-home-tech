@@ -13,8 +13,8 @@ public class AggregatorServiceImpl implements AggregatorService {
 
     @Override
     public Optional<SensorsSnapshotAvro> updateState(SensorEventAvro event) {
-        String hubId = event.getHubId();
-        String sensorId = event.getId();
+        String hubId = event.getHubId().toString();
+        String sensorId = event.getId().toString();
         long eventTimestamp = event.getTimestamp();
 
         // 1. Получаем или создаём снапшот хаба
@@ -27,7 +27,10 @@ public class AggregatorServiceImpl implements AggregatorService {
         }
 
         // 2. Получаем карту состояний сенсоров
-        Map<String, SensorStateAvro> states = snapshot.getSensorsState();
+        Map<String, SensorStateAvro> states = new HashMap<>();
+        for (Map.Entry<CharSequence, SensorStateAvro> entry : snapshot.getSensorsState().entrySet()) {
+            states.put(entry.getKey().toString(), entry.getValue());
+        }
         SensorStateAvro oldState = states.get(sensorId);
 
         // 3. Если состояние уже есть — проверим, нужно ли обновлять

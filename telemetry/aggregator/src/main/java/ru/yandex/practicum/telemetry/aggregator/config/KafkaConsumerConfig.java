@@ -1,13 +1,10 @@
 package ru.yandex.practicum.telemetry.aggregator.config;
 
-import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.VoidDeserializer;
 import org.springframework.context.annotation.Configuration;
-import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
 import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
-import ru.yandex.practicum.telemetry.aggregator.config.serialization.HubEventDeserializer;
 import ru.yandex.practicum.telemetry.aggregator.config.serialization.SensorEventDeserializer;
 
 import java.util.Properties;
