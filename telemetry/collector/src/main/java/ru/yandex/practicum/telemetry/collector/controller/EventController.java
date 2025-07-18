@@ -29,49 +29,62 @@ public class EventController extends CollectorControllerGrpc.CollectorController
     private Map<SensorEventProto.PayloadCase, SensorEventHandler> sensorEventHandlers;
     private Map<HubEventProto.PayloadCase, HubEventHandler> hubEventHandlers;
 
-    // Преобразовываем набор хендлеров в map, где ключ — тип события от конкретного датчика или хаба.
-    // Это нужно для упрощения поиска подходящего хендлера во время обработки событий
     @PostConstruct
     void init() {
+        log.info("Инициализация EventController...");
         sensorEventHandlers = sensorEventHandlersInit.stream()
                 .collect(Collectors.toMap(SensorEventHandler::getMessageType, Function.identity()));
         hubEventHandlers = hubEventHandlersInit.stream()
                 .collect(Collectors.toMap(HubEventHandler::getMessageType, Function.identity()));
+
+        log.info("Sensor handlers: {}", sensorEventHandlers.keySet());
+        log.info("Hub handlers: {}", hubEventHandlers.keySet());
     }
 
     @Override
     public void collectSensorEvent(SensorEventProto request, StreamObserver<Empty> responseObserver) {
+        log.info("Получено событие от сенсора: {}", request);
         try {
-            // проверяем, есть ли обработчик для полученного события
-            if (sensorEventHandlers.containsKey(request.getPayloadCase())) {
-                // если обработчик найден, передаём событие ему на обработку
-                sensorEventHandlers.get(request.getPayloadCase()).handle(request);
+            SensorEventProto.PayloadCase payloadType = request.getPayloadCase();
+            log.info("Тип payload: {}", payloadType);
+
+            if (sensorEventHandlers.containsKey(payloadType)) {
+                log.info("Передаём обработку в handler: {}", sensorEventHandlers.get(payloadType).getClass().getSimpleName());
+                sensorEventHandlers.get(payloadType).handle(request);
             } else {
-                throw new IllegalArgumentException("Не могу найти обработчик для события сенсора " + request.getPayloadCase());
+                log.warn("Не найден обработчик для события сенсора: {}", payloadType);
+                throw new IllegalArgumentException("Не могу найти обработчик для события сенсора " + payloadType);
             }
 
-            // после обработки события возвращаем ответ клиенту
             responseObserver.onNext(Empty.getDefaultInstance());
-            // и завершаем обработку запроса
             responseObserver.onCompleted();
+            log.info("Событие сенсора успешно обработано.");
         } catch (Exception e) {
-            // в случае исключения отправляем ошибку клиенту
+            log.error("Ошибка при обработке события сенсора", e);
             responseObserver.onError(new StatusRuntimeException(Status.fromThrowable(e)));
         }
     }
 
     @PostMapping("/hubs")
     public void collectHubEvent(HubEventProto request, StreamObserver<Empty> responseObserver) {
+        log.info("Получено событие от хаба: {}", request);
         try {
-            if (hubEventHandlers.containsKey(request.getPayloadCase())) {
-                hubEventHandlers.get(request.getPayloadCase()).handle(request);
+            HubEventProto.PayloadCase payloadType = request.getPayloadCase();
+            log.info("Тип payload: {}", payloadType);
+
+            if (hubEventHandlers.containsKey(payloadType)) {
+                log.info("Передаём обработку в handler: {}", hubEventHandlers.get(payloadType).getClass().getSimpleName());
+                hubEventHandlers.get(payloadType).handle(request);
             } else {
-                throw new IllegalArgumentException("Не могу найти обработчик для события хаба " + request.getPayloadCase());
+                log.warn("Не найден обработчик для события хаба: {}", payloadType);
+                throw new IllegalArgumentException("Не могу найти обработчик для события хаба " + payloadType);
             }
 
             responseObserver.onNext(Empty.getDefaultInstance());
             responseObserver.onCompleted();
+            log.info("Событие хаба успешно обработано.");
         } catch (Exception e) {
+            log.error("Ошибка при обработке события хаба", e);
             responseObserver.onError(new StatusRuntimeException(Status.fromThrowable(e)));
         }
     }

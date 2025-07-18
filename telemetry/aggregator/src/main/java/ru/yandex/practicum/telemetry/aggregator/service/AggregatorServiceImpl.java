@@ -14,7 +14,7 @@ import java.util.*;
 public class AggregatorServiceImpl implements AggregatorService {
 
     private final Map<String, SensorsSnapshotAvro> snapshotByHub = new HashMap<>();
-/*
+
     @Override
     public Optional<SensorsSnapshotAvro> updateState(SensorEventAvro event) {
         String hubId = event.getHubId().toString();
@@ -60,33 +60,4 @@ public class AggregatorServiceImpl implements AggregatorService {
 
         return Optional.of(snapshot);
     }
- */
-    @Override
-    public Optional<SensorsSnapshotAvro> updateState(SensorEventAvro event) {
-        String hubId = event.getHubId().toString();
-        CharSequence sensorId = event.getId();
-        long eventTimestamp = event.getTimestamp();
-
-        // 1. Получаем или создаём снапшот хаба
-        SensorsSnapshotAvro snapshot = snapshotByHub.get(hubId);
-        if (snapshot == null) {
-            snapshot = new SensorsSnapshotAvro();
-            snapshot.setHubId(hubId);
-            snapshot.setSensorsState(new HashMap<>());
-            snapshotByHub.put(hubId, snapshot);
-        }
-
-        // 2. Обновляем состояние сенсора без проверок
-        SensorStateAvro newState = new SensorStateAvro();
-        newState.setTimestamp(Instant.ofEpochMilli(eventTimestamp));
-        newState.setData(event.getPayload());
-
-        snapshot.getSensorsState().put(sensorId, newState);
-
-        // 3. Обновляем timestamp снапшота
-        snapshot.setTimestamp(Instant.ofEpochMilli(eventTimestamp));
-
-        return Optional.of(snapshot);
-    }
-
 }
