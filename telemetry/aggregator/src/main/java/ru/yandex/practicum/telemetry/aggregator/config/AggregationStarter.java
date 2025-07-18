@@ -11,9 +11,7 @@ import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
 import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
 import ru.yandex.practicum.telemetry.aggregator.service.AggregatorService;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-
 
 import java.time.Duration;
 import java.util.List;

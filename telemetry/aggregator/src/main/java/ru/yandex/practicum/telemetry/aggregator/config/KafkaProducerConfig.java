@@ -16,8 +16,17 @@ import java.util.Properties;
 public class KafkaProducerConfig {
 
     private static final Producer<String, SpecificRecordBase> PRODUCER = createProducer();
+    private static final Producer<String, SensorsSnapshotAvro> SNAPSHOT_AVRO_PRODUCER = createSnapshotProducer();
 
     private static final String BOOTSTRAP_SERVERS = "localhost:9092";
+
+    public static Producer<String, SpecificRecordBase> getProducer() {
+        return PRODUCER;
+    }
+
+    public static Producer<String, SensorsSnapshotAvro> getSnapshotProducer() {
+        return SNAPSHOT_AVRO_PRODUCER;
+    }
 
     @Bean
     public static Producer<String, SpecificRecordBase> createProducer() {
@@ -30,12 +39,14 @@ public class KafkaProducerConfig {
         return new KafkaProducer<>(config);
     }
 
-    public static Producer<String, SpecificRecordBase> getProducer() {
-        return PRODUCER;
-    }
+    @Bean
+    public static Producer<String, SensorsSnapshotAvro> createSnapshotProducer() {
+        Properties config = new Properties();
+        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
+        config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, GeneralAvroSerializer.class.getName());
+        config.put("schema.registry.url", "http://localhost:8081");
 
-    public static Producer<String, SensorsSnapshotAvro> getSnapshotProducer() {
-        return (Producer<String, SensorsSnapshotAvro>) (Producer<?, ?>) PRODUCER;
+        return new KafkaProducer<>(config);
     }
-
 }
