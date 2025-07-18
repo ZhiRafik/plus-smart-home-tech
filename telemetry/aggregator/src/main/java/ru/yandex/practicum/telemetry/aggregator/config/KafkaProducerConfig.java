@@ -5,7 +5,6 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
 import ru.yandex.practicum.telemetry.serialization.GeneralAvroSerializer;
@@ -28,7 +27,6 @@ public class KafkaProducerConfig {
         return SNAPSHOT_AVRO_PRODUCER;
     }
 
-    @Bean
     public static Producer<String, SpecificRecordBase> createProducer() {
         Properties config = new Properties();
 
@@ -39,7 +37,6 @@ public class KafkaProducerConfig {
         return new KafkaProducer<>(config);
     }
 
-    @Bean
     public static Producer<String, SensorsSnapshotAvro> createSnapshotProducer() {
         Properties config = new Properties();
         config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
