@@ -1,5 +1,6 @@
 package ru.yandex.practicum.telemetry.aggregator.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
 import ru.yandex.practicum.kafka.telemetry.event.SensorStateAvro;
@@ -8,11 +9,12 @@ import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
 import java.time.Instant;
 import java.util.*;
 
+@Slf4j
 @Service
 public class AggregatorServiceImpl implements AggregatorService {
 
     private final Map<String, SensorsSnapshotAvro> snapshotByHub = new HashMap<>();
-
+/*
     @Override
     public Optional<SensorsSnapshotAvro> updateState(SensorEventAvro event) {
         String hubId = event.getHubId().toString();
@@ -36,10 +38,12 @@ public class AggregatorServiceImpl implements AggregatorService {
         if (oldState != null) {
             long oldTs = oldState.getTimestamp().toEpochMilli();
             if (oldTs >= eventTimestamp) {
-                return Optional.empty(); // событие устарело
+                log.info("Пропускаю событие от сенсора {}: устаревшее ({} <= {})", sensorId, eventTimestamp, oldTs);
+                return Optional.empty();
             }
             if (oldState.getData().equals(event.getPayload())) {
-                return Optional.empty(); // данные не изменились
+                log.info("Пропускаю событие от сенсора {}: данные не изменились", sensorId);
+                return Optional.empty();
             }
         }
 
@@ -56,6 +60,33 @@ public class AggregatorServiceImpl implements AggregatorService {
 
         return Optional.of(snapshot);
     }
+ */
+    @Override
+    public Optional<SensorsSnapshotAvro> updateState(SensorEventAvro event) {
+        String hubId = event.getHubId().toString();
+        CharSequence sensorId = event.getId();
+        long eventTimestamp = event.getTimestamp();
 
+        // 1. Получаем или создаём снапшот хаба
+        SensorsSnapshotAvro snapshot = snapshotByHub.get(hubId);
+        if (snapshot == null) {
+            snapshot = new SensorsSnapshotAvro();
+            snapshot.setHubId(hubId);
+            snapshot.setSensorsState(new HashMap<>());
+            snapshotByHub.put(hubId, snapshot);
+        }
+
+        // 2. Обновляем состояние сенсора без проверок
+        SensorStateAvro newState = new SensorStateAvro();
+        newState.setTimestamp(Instant.ofEpochMilli(eventTimestamp));
+        newState.setData(event.getPayload());
+
+        snapshot.getSensorsState().put(sensorId, newState);
+
+        // 3. Обновляем timestamp снапшота
+        snapshot.setTimestamp(Instant.ofEpochMilli(eventTimestamp));
+
+        return Optional.of(snapshot);
+    }
 
 }
