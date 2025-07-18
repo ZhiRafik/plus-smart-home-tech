@@ -16,7 +16,7 @@ public class AggregatorServiceImpl implements AggregatorService {
     @Override
     public Optional<SensorsSnapshotAvro> updateState(SensorEventAvro event) {
         String hubId = event.getHubId().toString();
-        String sensorId = event.getId().toString();
+        CharSequence sensorId = event.getId();
         long eventTimestamp = event.getTimestamp();
 
         // 1. Получаем или создаём снапшот хаба
@@ -24,25 +24,20 @@ public class AggregatorServiceImpl implements AggregatorService {
         if (snapshot == null) {
             snapshot = new SensorsSnapshotAvro();
             snapshot.setHubId(hubId);
-            snapshot.setSensorsState(new HashMap<>());
+            snapshot.setSensorsState(new HashMap<>());  // Инициализация
             snapshotByHub.put(hubId, snapshot);
         }
 
-        // 2. Получаем карту состояний сенсоров
-        Map<String, SensorStateAvro> states = new HashMap<>();
-        for (Map.Entry<CharSequence, SensorStateAvro> entry : snapshot.getSensorsState().entrySet()) {
-            states.put(entry.getKey().toString(), entry.getValue());
-        }
+        // 2. Работаем напрямую с Map<CharSequence, SensorStateAvro>
+        Map<CharSequence, SensorStateAvro> states = snapshot.getSensorsState();
         SensorStateAvro oldState = states.get(sensorId);
 
         // 3. Если состояние уже есть — проверим, нужно ли обновлять
         if (oldState != null) {
             long oldTs = oldState.getTimestamp().toEpochMilli();
-
             if (oldTs >= eventTimestamp) {
                 return Optional.empty(); // событие устарело
             }
-
             if (oldState.getData().equals(event.getPayload())) {
                 return Optional.empty(); // данные не изменились
             }
@@ -53,13 +48,14 @@ public class AggregatorServiceImpl implements AggregatorService {
         newState.setTimestamp(Instant.ofEpochMilli(eventTimestamp));
         newState.setData(event.getPayload());
 
-        // 5. Обновляем Map
+        // 5. Обновляем Map прямо в snapshot
         states.put(sensorId, newState);
 
-        // 6. Обновляем таймстемп снапшота
+        // 6. Обновляем timestamp снапшота
         snapshot.setTimestamp(Instant.ofEpochMilli(eventTimestamp));
 
         return Optional.of(snapshot);
     }
+
 
 }
