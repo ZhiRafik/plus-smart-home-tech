@@ -1,4 +1,4 @@
-package ru.yandex.practicum;
+package ru.yandex.practicum.telemetry.aggregator;
 
 
 import org.springframework.boot.SpringApplication;
