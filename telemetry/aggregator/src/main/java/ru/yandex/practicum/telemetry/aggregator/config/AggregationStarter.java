@@ -32,12 +32,6 @@ public class AggregationStarter implements Runnable {
 
     private volatile boolean running = true;
 
-    @PostConstruct
-    public void startInThread() {
-        Thread thread = new Thread(this, "aggregator-thread");
-        thread.start();
-    }
-
     @Override
     public void run() {
         try {
