@@ -2,6 +2,7 @@ package ru.yandex.practicum.telemetry.collector.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
 import ru.yandex.practicum.telemetry.collector.config.serialization.GeneralAvroSerializer;
 import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -32,4 +33,9 @@ public class KafkaProducerConfig {
     public static Producer<String, SpecificRecordBase> getProducer() {
         return PRODUCER;
     }
+
+    public static Producer<String, SensorsSnapshotAvro> getSnapshotProducer() {
+        return (Producer<String, SensorsSnapshotAvro>) (Producer<?, ?>) PRODUCER;
+    }
+
 }
