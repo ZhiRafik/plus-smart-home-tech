@@ -1,5 +1,6 @@
 package ru.yandex.practicum.telemetry.aggregator.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
@@ -11,6 +12,7 @@ import ru.yandex.practicum.telemetry.serialization.GeneralAvroSerializer;
 
 import java.util.Properties;
 
+@Slf4j
 @Configuration
 public class KafkaProducerConfig {
 
@@ -34,7 +36,12 @@ public class KafkaProducerConfig {
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,  StringSerializer.class.getName());
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, GeneralAvroSerializer.class.getName());
 
-        return new KafkaProducer<>(config);
+        log.info("Создание KafkaProducer (Generic Avro) с конфигурацией:");
+        config.forEach((key, value) -> log.info("{} = {}", key, value));
+
+        Producer<String, SpecificRecordBase> producer = new KafkaProducer<>(config);
+        log.info("KafkaProducer<SpecificRecordBase> успешно создан.");
+        return producer;
     }
 
     public static Producer<String, SensorsSnapshotAvro> createSnapshotProducer() {
@@ -43,6 +50,11 @@ public class KafkaProducerConfig {
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, GeneralAvroSerializer.class.getName());
 
-        return new KafkaProducer<>(config);
+        log.info("Создание KafkaProducer (Snapshot) с конфигурацией:");
+        config.forEach((key, value) -> log.info("{} = {}", key, value));
+
+        Producer<String, SensorsSnapshotAvro> producer = new KafkaProducer<>(config);
+        log.info("KafkaProducer<SensorsSnapshotAvro> успешно создан.");
+        return producer;
     }
 }

@@ -33,46 +33,78 @@ public class AggregationStarter implements Runnable {
     @Override
     public void run() {
         try {
+            log.info("Подписка на топик telemetry.sensors.v1");
             consumer.subscribe(List.of("telemetry.sensors.v1"));
+
             log.info("Aggregator запущен. Ожидаем события...");
 
             while (running) {
+                log.trace("Начинаем poll Kafka...");
                 ConsumerRecords<String, SensorEventAvro> records = consumer.poll(Duration.ofMillis(100));
+                log.trace("Получено {} событий", records.count());
 
                 for (ConsumerRecord<String, SensorEventAvro> record : records) {
-                    SensorEventAvro event = record.value();
+                    log.debug("Получено сообщение: offset={}, partition={}, key={}, timestamp={}, value={}",
+                            record.offset(), record.partition(), record.key(), record.timestamp(), record.value());
 
+                    SensorEventAvro event = record.value();
                     Optional<SensorsSnapshotAvro> maybeSnapshot = aggregatorService.updateState(event);
 
-                    maybeSnapshot.ifPresent(snapshot -> {
+                    if (maybeSnapshot.isPresent()) {
+                        SensorsSnapshotAvro snapshot = maybeSnapshot.get();
+                        log.debug("Создан снапшот для hubId={}: {}", snapshot.getHubId(), snapshot);
+
                         ProducerRecord<String, SensorsSnapshotAvro> outRecord = new ProducerRecord<>(
                                 "telemetry.snapshots.v1",
                                 snapshot.getHubId().toString(),
                                 snapshot
                         );
+
                         producer.send(outRecord, (metadata, ex) -> {
                             if (ex != null) {
                                 log.error("Ошибка при отправке снапшота в Kafka", ex);
+                            } else {
+                                log.debug("Снапшот успешно отправлен: topic={}, partition={}, offset={}",
+                                        metadata.topic(), metadata.partition(), metadata.offset());
                             }
                         });
-                    });
+                    } else {
+                        log.debug("Снапшот не сформирован для события hubId={}", event.getHubId());
+                    }
                 }
 
-                consumer.commitAsync();
+                log.trace("Отправка асинхронного коммита...");
+                consumer.commitAsync((offsets, exception) -> {
+                    if (exception != null) {
+                        log.error("Ошибка при commitAsync", exception);
+                    } else {
+                        log.trace("Коммит выполнен: {}", offsets);
+                    }
+                });
             }
         } catch (WakeupException ignored) {
-
+            log.info("WakeupException: получен сигнал завершения");
         } catch (Exception e) {
             log.error("Ошибка во время обработки событий от датчиков", e);
         } finally {
             try {
-                log.info("Завершаем: flush и commit");
+                log.info("Завершаем: flush и commitSync");
                 producer.flush();
                 consumer.commitSync();
+            } catch (Exception e) {
+                log.error("Ошибка при завершении и commitSync", e);
             } finally {
                 log.info("Закрываем продюсер и консьюмер");
-                producer.close();
-                consumer.close();
+                try {
+                    producer.close();
+                } catch (Exception e) {
+                    log.error("Ошибка при закрытии продюсера", e);
+                }
+                try {
+                    consumer.close();
+                } catch (Exception e) {
+                    log.error("Ошибка при закрытии консьюмера", e);
+                }
             }
         }
     }
