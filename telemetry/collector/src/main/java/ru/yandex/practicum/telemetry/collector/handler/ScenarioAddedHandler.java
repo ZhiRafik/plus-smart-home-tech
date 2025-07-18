@@ -24,7 +24,7 @@ public class ScenarioAddedHandler implements HubEventHandler {
 
         ProducerRecord<String, SpecificRecordBase> record = new ProducerRecord<>(
                 TOPIC,
-                avroEvent.getHubId(),
+                avroEvent.getHubId().toString(),
                 avroEvent
         );
 
