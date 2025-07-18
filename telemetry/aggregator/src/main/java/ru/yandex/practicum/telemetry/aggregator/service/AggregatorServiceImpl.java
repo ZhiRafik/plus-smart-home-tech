@@ -41,7 +41,8 @@ public class AggregatorServiceImpl implements AggregatorService {
                 log.info("Пропускаю событие от сенсора {}: устаревшее ({} <= {})", sensorId, eventTimestamp, oldTs);
                 return Optional.empty();
             }
-            if (oldState.getData().equals(event.getPayload())) {
+            if (oldState.getData() != null && event.getPayload() != null
+                    && oldState.getData().toString().equals(event.getPayload().toString())) {
                 log.info("Пропускаю событие от сенсора {}: данные не изменились", sensorId);
                 return Optional.empty();
             }

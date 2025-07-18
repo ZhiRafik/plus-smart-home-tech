@@ -37,5 +37,4 @@ public class KafkaProducerConfig {
     public static Producer<String, SensorsSnapshotAvro> getSnapshotProducer() {
         return (Producer<String, SensorsSnapshotAvro>) (Producer<?, ?>) PRODUCER;
     }
-
 }
