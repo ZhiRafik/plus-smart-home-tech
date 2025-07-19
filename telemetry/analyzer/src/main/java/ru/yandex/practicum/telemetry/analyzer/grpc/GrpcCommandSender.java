@@ -13,11 +13,8 @@ import java.time.Instant;
 @Service
 public class GrpcCommandSender {
 
-    private final HubRouterControllerBlockingStub hubRouterClient;
-
-    public GrpcCommandSender(@GrpcClient("hub-router") HubRouterControllerBlockingStub hubRouterClient) {
-        this.hubRouterClient = hubRouterClient;
-    }
+    @GrpcClient("hub-router")
+    private HubRouterControllerBlockingStub hubRouterClient;
 
     public void sendDeviceAction(DeviceActionRequest request) {
         log.info("Отправка gRPC-команды: hubId={}, scenario='{}', action={}",

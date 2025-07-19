@@ -10,7 +10,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
-import ru.yandex.practicum.telemetry.collector.handler.HubEventHandler;
+import ru.yandex.practicum.telemetry.analyzer.handler.HubEventHandler;
 
 import java.time.Duration;
 import java.util.HashMap;
