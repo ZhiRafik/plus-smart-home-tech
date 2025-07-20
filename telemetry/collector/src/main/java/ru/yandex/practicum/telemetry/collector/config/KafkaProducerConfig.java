@@ -15,8 +15,6 @@ import java.util.Properties;
 @Configuration
 public class KafkaProducerConfig {
 
-    private static final Producer<String, SpecificRecordBase> PRODUCER = createProducer();
-
     private static final String BOOTSTRAP_SERVERS = "localhost:9092";
 
     @Bean
@@ -28,13 +26,5 @@ public class KafkaProducerConfig {
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, GeneralAvroSerializer.class.getName());
 
         return new KafkaProducer<>(config);
-    }
-
-    public static Producer<String, SpecificRecordBase> getProducer() {
-        return PRODUCER;
-    }
-
-    public static Producer<String, SensorsSnapshotAvro> getSnapshotProducer() {
-        return (Producer<String, SensorsSnapshotAvro>) (Producer<?, ?>) PRODUCER;
     }
 }

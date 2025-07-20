@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.stereotype.Component;
@@ -34,12 +33,12 @@ public class AggregationStarter implements Runnable {
     @Override
     public void run() {
         try {
-            log.info("Подписка на топик telemetry.sensors.v1");
-            consumer.subscribe(List.of("telemetry.sensors.v1"));
+            log.info("Подписка на топик " + snapshotTopic);
+            consumer.subscribe(List.of(snapshotTopic));
 
 
             while (running) {
-                ConsumerRecords<String, SpecificRecordBase> records = consumer.poll(Duration.ofMillis(500));
+                ConsumerRecords<String, SpecificRecordBase> records = consumer.poll(Duration.ofMillis(100));
                 log.trace("Получено {} событий", records.count());
 
                 for (ConsumerRecord<String, SpecificRecordBase> record : records) {
@@ -47,7 +46,7 @@ public class AggregationStarter implements Runnable {
                             record.offset(), record.partition(), record.key(), record.timestamp(), record.value());
 
                     if(!(record.value() instanceof SensorEventAvro event)) {
-                        log.warn("Unexpected record type: {}", record.value().getClass().getSimpleName());
+                        log.warn("Неизвестное значение записи: {}", record.value().getClass().getSimpleName());
                         continue;
                     }
 
