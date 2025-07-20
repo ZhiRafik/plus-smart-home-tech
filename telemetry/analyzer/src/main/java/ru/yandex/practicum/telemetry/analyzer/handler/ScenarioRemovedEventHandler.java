@@ -4,9 +4,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
-import ru.yandex.practicum.telemetry.analyzer.model.Scenario;
+import ru.yandex.practicum.telemetry.analyzer.model.*;
 import ru.yandex.practicum.telemetry.analyzer.repository.*;
 
+import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -15,8 +16,8 @@ import java.util.Optional;
 public class ScenarioRemovedEventHandler implements HubEventHandler {
 
     private final ScenarioRepository scenarioRepository;
-    private final ScenarioConditionRepository conditionRepository;
-    private final ScenarioActionRepository actionRepository;
+    private final ScenarioConditionRepository scenarioConditionRepository;
+    private final ScenarioActionRepository scenarioActionRepository;
 
     @Override
     public HubEventProto.PayloadCase getMessageType() {
@@ -25,7 +26,7 @@ public class ScenarioRemovedEventHandler implements HubEventHandler {
 
     @Override
     public void handle(HubEventProto event) {
-        String hubId = event.getHubId().toString();
+        String hubId = event.getHubId();
         String scenarioName = event.getScenarioRemoved().getName();
 
         Optional<Scenario> optionalScenario = scenarioRepository.findByHubIdAndName(hubId, scenarioName);
@@ -34,14 +35,21 @@ public class ScenarioRemovedEventHandler implements HubEventHandler {
             Scenario scenario = optionalScenario.get();
             Long scenarioId = scenario.getId();
 
-            conditionRepository.deleteBy(scenarioId);
-            actionRepository.deleteByScenarioId(scenarioId);
-            scenarioRepository.deleteById(scenarioId);
+            try {
+                List<ScenarioCondition> conditions = scenarioConditionRepository.findByScenarioId(scenarioId);
+                scenarioConditionRepository.deleteAll(conditions);
 
-            log.info("Удалён сценарий '{}' (ID = {}) из хаба {}", scenarioName, scenarioId, hubId);
+                List<ScenarioAction> actions = scenarioActionRepository.findByScenarioId(scenarioId);
+                scenarioActionRepository.deleteAll(actions);
+
+                scenarioRepository.deleteById(scenarioId);
+
+                log.info("Удалён сценарий '{}' (ID = {}) из хаба {}", scenarioName, scenarioId, hubId);
+            } catch (Exception e) {
+                log.error("Ошибка при удалении сценария '{}': {}", scenarioName, e.getMessage(), e);
+            }
         } else {
             log.warn("Сценарий с именем '{}' для хаба '{}' не найден", scenarioName, hubId);
         }
     }
-
 }

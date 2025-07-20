@@ -1,15 +1,15 @@
 package ru.yandex.practicum.telemetry.analyzer.processor;
 
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.avro.io.BinaryDecoder;
-import org.apache.avro.io.DecoderFactory;
-import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
+import ru.yandex.practicum.telemetry.analyzer.config.ProtoUtils;
 import ru.yandex.practicum.telemetry.analyzer.handler.HubEventHandler;
 
 import java.time.Duration;
@@ -34,30 +34,41 @@ public class HubEventProcessor implements Runnable {
             handlerMap.put(handler.getMessageType(), handler);
         }
 
-        SpecificDatumReader<HubEventProto> reader = new SpecificDatumReader<>(HubEventProto.class);
+        try {
+            while (true) {
+                ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(500));
+                for (ConsumerRecord<String, byte[]> record : records) {
+                    try {
+                        HubEventProto event = ProtoUtils.deserialize(record.value(), HubEventProto.parser());
+                        HubEventProto.PayloadCase type = event.getPayloadCase();
 
-        while (true) {
-            ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(500));
-            for (ConsumerRecord<String, byte[]> record : records) {
-                byte[] bytes = record.value();
+                        HubEventHandler handler = handlerMap.get(type);
+                        if (handler != null) {
+                            handler.handle(event);
+                        } else {
+                            log.warn("Нет обработчика для события типа {}", type);
+                        }
 
-                try {
-                    BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(bytes, null);
-                    HubEventProto event = reader.read(null, decoder);
-                    HubEventProto.PayloadCase type = event.getPayloadCase();
-
-                    HubEventHandler handler = handlerMap.get(type);
-                    if (handler != null) {
-                        handler.handle(event);
-                    } else {
-                        log.warn("Нет обработчика для события типа {}", type);
+                    } catch (Exception e) {
+                        log.error("Ошибка при десериализации или обработке события: {}", e.getMessage(), e);
                     }
-
-                } catch (Exception e) {
-                    log.error("Ошибка при десериализации или обработке события: {}", e.getMessage(), e);
                 }
             }
+        } catch (WakeupException e) {
+            log.info("Получен сигнал wakeup, завершаем HubEventProcessor...");
+        } catch (Exception e) {
+            log.error("Неожиданная ошибка в HubEventProcessor", e);
+        } finally {
+            consumer.close();
+            log.info("Kafka consumer закрыт");
         }
     }
+
+    @PreDestroy
+    public void shutdown() {
+        log.info("Завершение HubEventProcessor...");
+        consumer.wakeup();
+    }
+
 
 }

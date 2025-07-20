@@ -8,11 +8,11 @@ import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.avro.Schema;
 import ru.yandex.practicum.grpc.telemetry.event.DeviceActionProto;
 import ru.yandex.practicum.grpc.telemetry.event.DeviceActionRequest;
-import ru.yandex.practicum.grpc.telemetry.event.enums.ActionTypeProto;
 import ru.yandex.practicum.kafka.telemetry.event.*;
 import ru.yandex.practicum.telemetry.analyzer.grpc.GrpcCommandSender;
 import ru.yandex.practicum.telemetry.analyzer.model.*;
 import ru.yandex.practicum.telemetry.analyzer.repository.*;
+import ru.yandex.practicum.grpc.telemetry.event.enums.*;
 
 import java.util.*;
 
@@ -43,7 +43,7 @@ public class ScenarioServiceImpl implements ScenarioService {
                 String sensorId = sc.getSensor().getId();
                 Map<String, Integer> currentValues = sensorValues.get(sensorId);
 
-                if (currentValues == null) {
+                if (currentValues == null || currentValues.isEmpty()) {
                     log.warn("Нет значения для сенсора {}", sensorId);
                     return false;
                 }
@@ -74,6 +74,7 @@ public class ScenarioServiceImpl implements ScenarioService {
             }
         }
     }
+
     private Map<String, Map<String, Integer>> extractSensorValues(SensorsSnapshotAvro snapshot) {
         Map<String, Map<String, Integer>> result = new HashMap<>();
 
@@ -91,7 +92,7 @@ public class ScenarioServiceImpl implements ScenarioService {
             Schema schema = record.getSchema();
             for (Schema.Field field : schema.getFields()) {
                 String fieldName = field.name();
-                Object rawValue = record.get(field.pos());
+                Object rawValue = record.get(fieldName);
 
                 if (rawValue instanceof Boolean b) {
                     sensorMetrics.put(fieldName, b ? 1 : 0);
@@ -110,11 +111,24 @@ public class ScenarioServiceImpl implements ScenarioService {
         return result;
     }
 
-    private boolean evaluateCondition(Map<String, Integer> currentValue, Condition condition) {
-        return switch (condition.getOperation()) {
-            case "БОЛЬШЕ" -> currentValue > condition.getValue();
-            case "МЕНЬШЕ" -> currentValue < condition.getValue();
-            case "РАВНО" -> currentValue.equals(condition.getValue());
+    private boolean evaluateCondition(Map<String, Integer> currentValues, Condition condition) {
+        ConditionOperationProto op;
+        try {
+            op = ConditionOperationProto.valueOf(condition.getOperation());
+        } catch (IllegalArgumentException e) {
+            log.warn("Неизвестная операция: '{}'", condition.getOperation());
+            return false;
+        }
+
+        if (currentValues.get(condition.getType()) == null) {
+            log.warn("Отсутствует значение для конкретного типа метрики: '{}'", condition.getOperation());
+            return false;
+        }
+
+        return switch (op) {
+            case GREATER_THAN -> currentValues.get(condition.getType()) > condition.getValue();
+            case LOWER_THAN -> currentValues.get(condition.getType()) < condition.getValue();
+            case EQUALS -> currentValues.get(condition.getType()).equals(condition.getValue());
             default -> {
                 log.warn("Неизвестная операция '{}'", condition.getOperation());
                 yield false;

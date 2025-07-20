@@ -1,10 +1,8 @@
 package ru.yandex.practicum.telemetry.analyzer.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Data;
+import ru.yandex.practicum.grpc.telemetry.event.enums.DeviceTypeProto;
 
 @Data
 @Entity

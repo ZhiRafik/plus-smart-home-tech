@@ -9,7 +9,6 @@ import ru.yandex.practicum.telemetry.analyzer.model.*;
 import ru.yandex.practicum.telemetry.analyzer.repository.ActionRepository;
 import ru.yandex.practicum.telemetry.analyzer.repository.ScenarioConditionRepository;
 import ru.yandex.practicum.telemetry.analyzer.repository.ScenarioRepository;
-import ru.yandex.practicum.telemetry.analyzer.service.ScenarioService;
 
 import java.util.UUID;
 
@@ -29,10 +28,10 @@ public class ScenarioAddedEventHandler implements HubEventHandler {
 
     @Override
     public void handle(HubEventProto event) {
-        ScenarioAddedEventProto payload = event.getScenarioAdded();
-
+        log.info("Получено событие: {}", event);
         Scenario scenario = new Scenario();
-        scenario.setHubId(event.getHubId().toString());
+        ScenarioAddedEventProto payload = event.getScenarioAdded();
+        scenario.setHubId(event.getHubId());
         scenario.setName(payload.getName());
 
         for (var protoCond : payload.getConditionList()) {
@@ -57,7 +56,7 @@ public class ScenarioAddedEventHandler implements HubEventHandler {
             Action action = new Action();
             action.setType(protoAction.getType().name());
             action.setValue(protoAction.getValue());
-            action.setSensorId(protoAction.getSensorId().toString());
+            action.setSensorId(protoAction.getSensorId());
             action.setScenario(scenario); // установим связь
 
             actionRepository.save(action);

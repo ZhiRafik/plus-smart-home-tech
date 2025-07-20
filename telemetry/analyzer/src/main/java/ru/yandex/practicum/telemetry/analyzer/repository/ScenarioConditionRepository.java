@@ -7,5 +7,7 @@ import ru.yandex.practicum.telemetry.analyzer.model.ScenarioConditionId;
 import java.util.List;
 
 public interface ScenarioConditionRepository extends JpaRepository<ScenarioCondition, ScenarioConditionId> {
+
     List<ScenarioCondition> findByScenarioId(Long scenarioId);
+    List<ScenarioCondition> findBySensorId(String sensorId);
 }

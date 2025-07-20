@@ -1,4 +1,4 @@
-package ru.yandex.practicum.telemetry.analyzer.consumer;
+package ru.yandex.practicum.telemetry.analyzer.config;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;

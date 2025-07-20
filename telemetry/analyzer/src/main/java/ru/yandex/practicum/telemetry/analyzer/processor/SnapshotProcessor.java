@@ -2,20 +2,16 @@ package ru.yandex.practicum.telemetry.analyzer.processor;
 
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.avro.io.BinaryDecoder;
-import org.apache.avro.io.DatumReader;
-import org.apache.avro.io.DecoderFactory;
-import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
 import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
+import ru.yandex.practicum.telemetry.analyzer.config.AvroUtils;
 import ru.yandex.practicum.telemetry.analyzer.service.ScenarioService;
 
-import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
 
@@ -36,30 +32,33 @@ public class SnapshotProcessor implements Runnable {
     @Override
     public void run() {
         log.info("Запуск SnapshotProcessor...");
-        while (true) {
-            ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(500));
-            for (ConsumerRecord<String, byte[]> record : records) {
-                try {
-                    SensorsSnapshotAvro snapshot = deserialize(record.value());
-                    scenarioService.processSnapshot(snapshot);
-                } catch (Exception e) {
-                    log.error("Ошибка при обработке снапшота", e);
+        try {
+            while (true) {
+                ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(500));
+                for (ConsumerRecord<String, byte[]> record : records) {
+                    try {
+                        log.trace("Обрабатываю snapshot");
+                        SensorsSnapshotAvro snapshot = AvroUtils.deserialize(record.value(), SensorsSnapshotAvro.class);
+                        scenarioService.processSnapshot(snapshot);
+                    } catch (Exception e) {
+                        log.error("Ошибка при обработке снапшота", e);
+                    }
                 }
+                consumer.commitSync();
             }
-            consumer.commitSync();
+        } catch (WakeupException e) {
+            log.info("Получен сигнал wakeup, завершаем SnapshotProcessor...");
+        } catch (Exception e) {
+            log.error("Неожиданная ошибка в SnapshotProcessor", e);
+        } finally {
+            consumer.close();
+            log.info("Kafka consumer закрыт");
         }
-    }
-
-    private SensorsSnapshotAvro deserialize(byte[] data) throws IOException {
-        DatumReader<SensorsSnapshotAvro> reader = new SpecificDatumReader<>(SensorsSnapshotAvro.class);
-        BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(data, null);
-        return reader.read(null, decoder);
     }
 
     @PreDestroy
     public void shutdown() {
-        log.info("Завершение SnapshotProcessor...");
-        consumer.close();
+        consumer.wakeup();
     }
 }
 
