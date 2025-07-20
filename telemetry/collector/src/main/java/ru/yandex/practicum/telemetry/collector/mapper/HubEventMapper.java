@@ -4,93 +4,10 @@ import com.google.protobuf.util.Timestamps;
 import jakarta.validation.constraints.NotNull;
 import ru.yandex.practicum.grpc.telemetry.event.*;
 import ru.yandex.practicum.kafka.telemetry.event.*;
-import ru.yandex.practicum.telemetry.collector.model.hub.DeviceAddedEvent;
-import ru.yandex.practicum.telemetry.collector.model.hub.DeviceRemovedEvent;
-import ru.yandex.practicum.telemetry.collector.model.hub.HubEvent;
-import ru.yandex.practicum.telemetry.collector.model.hub.ScenarioAddedEvent;
-import ru.yandex.practicum.telemetry.collector.model.hub.ScenarioRemovedEvent;
 
 import java.util.List;
 
 public class HubEventMapper {
-
-    public static @NotNull HubEventAvro mapToAvro(@NotNull HubEvent event) {
-        long timestamp = event.getTimestamp().toEpochMilli();
-        String hubId = event.getHubId();
-
-        return switch (event) {
-            case DeviceAddedEvent e -> {
-                DeviceAddedEventAvro payload = DeviceAddedEventAvro.newBuilder()
-                        .setId(e.getId())
-                        .setType(DeviceTypeAvro.valueOf(e.getDeviceType().name()))
-                        .build();
-
-                yield HubEventAvro.newBuilder()
-                        .setHubId(hubId)
-                        .setTimestamp(timestamp)
-                        .setPayload(payload)
-                        .build();
-            }
-
-            case DeviceRemovedEvent e -> {
-                DeviceRemovedEventAvro payload = DeviceRemovedEventAvro.newBuilder()
-                        .setId(e.getId())
-                        .build();
-
-                yield HubEventAvro.newBuilder()
-                        .setHubId(hubId)
-                        .setTimestamp(timestamp)
-                        .setPayload(payload)
-                        .build();
-            }
-
-            case ScenarioAddedEvent e -> {
-                List<ScenarioConditionAvro> conditions = e.getConditions().stream()
-                        .map(c -> ScenarioConditionAvro.newBuilder()
-                                .setSensorId(c.getSensorId())
-                                .setType(ConditionTypeAvro.valueOf(c.getType().name()))
-                                .setOperation(ConditionOperationAvro.valueOf(c.getOperation().name()))
-                                .setValue(c.getValue())
-                                .build())
-                        .toList();
-
-                List<DeviceActionAvro> actions = e.getActions().stream()
-                        .map(a -> DeviceActionAvro.newBuilder()
-                                .setSensorId(a.getSensorId())
-                                .setType(ActionTypeAvro.valueOf(a.getType().name()))
-                                .setValue(a.getValue())
-                                .build())
-                        .toList();
-
-                ScenarioAddedEventAvro payload = ScenarioAddedEventAvro.newBuilder()
-                        .setName(e.getName())
-                        .setConditions(conditions)
-                        .setActions(actions)
-                        .build();
-
-                yield HubEventAvro.newBuilder()
-                        .setHubId(hubId)
-                        .setTimestamp(timestamp)
-                        .setPayload(payload)
-                        .build();
-            }
-
-            case ScenarioRemovedEvent e -> {
-                ScenarioRemovedEventAvro payload = ScenarioRemovedEventAvro.newBuilder()
-                        .setName(e.getName())
-                        .build();
-
-                yield HubEventAvro.newBuilder()
-                        .setHubId(hubId)
-                        .setTimestamp(timestamp)
-                        .setPayload(payload)
-                        .build();
-            }
-
-            default -> throw new IllegalArgumentException("Unsupported event type: " + event.getClass().getName());
-        };
-    }
-
 
     public static @NotNull HubEventAvro mapToAvro(@NotNull HubEventProto proto) {
         long timestamp = Timestamps.toMillis(proto.getTimestamp());

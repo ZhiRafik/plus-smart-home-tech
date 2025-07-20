@@ -4,6 +4,8 @@ import com.google.protobuf.util.Timestamps;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.apache.avro.specific.SpecificRecordBase;
+import org.apache.avro.Schema;
 import ru.yandex.practicum.grpc.telemetry.event.DeviceActionProto;
 import ru.yandex.practicum.grpc.telemetry.event.DeviceActionRequest;
 import ru.yandex.practicum.grpc.telemetry.event.enums.ActionTypeProto;
@@ -25,11 +27,11 @@ public class ScenarioServiceImpl implements ScenarioService {
     private final GrpcCommandSender grpcCommandSender;
 
     @Override
-    public void processSnapshot(SensorEventAvro snapshot) {
+    public void processSnapshot(SensorsSnapshotAvro snapshot) {
         String hubId = snapshot.getHubId().toString();
         log.info("Обработка снапшота для хаба: {}", hubId);
 
-        Map<String, Integer> sensorValues = extractSensorValues(snapshot);
+        Map<String, Map<String, Integer>> sensorValues = extractSensorValues(snapshot);
 
         List<Scenario> scenarios = scenarioRepository.findByHubId(hubId);
         log.debug("Найдено {} сценариев для хаба {}", scenarios.size(), hubId);
@@ -39,14 +41,14 @@ public class ScenarioServiceImpl implements ScenarioService {
 
             boolean allConditionsTrue = conditions.stream().allMatch(sc -> {
                 String sensorId = sc.getSensor().getId();
-                Integer currentValue = sensorValues.get(sensorId);
+                Map<String, Integer> currentValues = sensorValues.get(sensorId);
 
-                if (currentValue == null) {
+                if (currentValues == null) {
                     log.warn("Нет значения для сенсора {}", sensorId);
                     return false;
                 }
 
-                return evaluateCondition(currentValue, sc.getCondition());
+                return evaluateCondition(currentValues, sc.getCondition());
             });
 
             if (allConditionsTrue) {
@@ -72,31 +74,43 @@ public class ScenarioServiceImpl implements ScenarioService {
             }
         }
     }
+    private Map<String, Map<String, Integer>> extractSensorValues(SensorsSnapshotAvro snapshot) {
+        Map<String, Map<String, Integer>> result = new HashMap<>();
 
-    private Map<String, Integer> extractSensorValues(SensorEventAvro snapshot) {
-        Map<String, Integer> result = new HashMap<>();
+        for (Map.Entry<CharSequence, SensorStateAvro> entry : snapshot.getSensorsState().entrySet()) {
+            String sensorId = entry.getKey().toString();
+            Object payload = entry.getValue().getData();
 
-        Object payload = snapshot.getPayload();
-        String sensorId = snapshot.getId().toString();
+            if (!(payload instanceof SpecificRecordBase record)) {
+                log.warn("Payload не является Avro-рекордом: {}", payload.getClass().getSimpleName());
+                continue;
+            }
 
-        if (payload instanceof TemperatureSensorAvro temp) {
-            result.put(sensorId, (int) temp.getTemperatureC());
-        } else if (payload instanceof ClimateSensorAvro climate) {
-            result.put(sensorId, (int) climate.getHumidity()); // или temp.getTemperature()
-        } else if (payload instanceof LightSensorAvro light) {
-            result.put(sensorId, (int) light.getLuminosity());
-        } else if (payload instanceof MotionSensorAvro motion) {
-            result.put(sensorId, motion.getMotion() ? 1 : 0);
-        } else if (payload instanceof SwitchSensorAvro sw) {
-            result.put(sensorId, sw.getState() ? 1 : 0);
-        } else {
-            log.warn("Неизвестный тип сенсора: {}", payload.getClass().getSimpleName());
+            Map<String, Integer> sensorMetrics = new HashMap<>();
+
+            Schema schema = record.getSchema();
+            for (Schema.Field field : schema.getFields()) {
+                String fieldName = field.name();
+                Object rawValue = record.get(field.pos());
+
+                if (rawValue instanceof Boolean b) {
+                    sensorMetrics.put(fieldName, b ? 1 : 0);
+                } else if (rawValue instanceof Number n) {
+                    sensorMetrics.put(fieldName, n.intValue());
+                } else {
+                    log.debug("Поле {} не добавлено: не является числом или boolean (тип: {})",
+                            fieldName, rawValue != null ? rawValue.getClass().getSimpleName() : "null"
+                    );
+                }
+            }
+
+            result.put(sensorId, sensorMetrics);
         }
 
         return result;
     }
 
-    private boolean evaluateCondition(Integer currentValue, Condition condition) {
+    private boolean evaluateCondition(Map<String, Integer> currentValue, Condition condition) {
         return switch (condition.getOperation()) {
             case "БОЛЬШЕ" -> currentValue > condition.getValue();
             case "МЕНЬШЕ" -> currentValue < condition.getValue();

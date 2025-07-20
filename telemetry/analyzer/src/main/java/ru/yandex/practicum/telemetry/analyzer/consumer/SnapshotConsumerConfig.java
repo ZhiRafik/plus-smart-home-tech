@@ -1,6 +1,5 @@
 package ru.yandex.practicum.telemetry.analyzer.consumer;
 
-
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;

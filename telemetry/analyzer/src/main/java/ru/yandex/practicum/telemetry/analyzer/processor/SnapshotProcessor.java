@@ -12,6 +12,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
+import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
 import ru.yandex.practicum.telemetry.analyzer.service.ScenarioService;
 
 import java.io.IOException;
@@ -39,7 +40,7 @@ public class SnapshotProcessor implements Runnable {
             ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(500));
             for (ConsumerRecord<String, byte[]> record : records) {
                 try {
-                    SensorEventAvro snapshot = deserialize(record.value());
+                    SensorsSnapshotAvro snapshot = deserialize(record.value());
                     scenarioService.processSnapshot(snapshot);
                 } catch (Exception e) {
                     log.error("Ошибка при обработке снапшота", e);
@@ -49,8 +50,8 @@ public class SnapshotProcessor implements Runnable {
         }
     }
 
-    private SensorEventAvro deserialize(byte[] data) throws IOException {
-        DatumReader<SensorEventAvro> reader = new SpecificDatumReader<>(SensorEventAvro.class);
+    private SensorsSnapshotAvro deserialize(byte[] data) throws IOException {
+        DatumReader<SensorsSnapshotAvro> reader = new SpecificDatumReader<>(SensorsSnapshotAvro.class);
         BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(data, null);
         return reader.read(null, decoder);
     }

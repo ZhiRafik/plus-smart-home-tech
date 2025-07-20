@@ -6,7 +6,6 @@ import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.errors.WakeupException;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
 import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
@@ -37,10 +36,8 @@ public class AggregationStarter implements Runnable {
             log.info("Подписка на топик telemetry.sensors.v1");
             consumer.subscribe(List.of("telemetry.sensors.v1"));
 
-            log.info("Aggregator запущен. Ожидаем события...");
 
             while (running) {
-                log.trace("Начинаем poll Kafka...");
                 ConsumerRecords<String, SensorEventAvro> records = consumer.poll(Duration.ofMillis(100));
                 log.trace("Получено {} событий", records.count());
 

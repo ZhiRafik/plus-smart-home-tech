@@ -34,7 +34,7 @@ public class ScenarioRemovedEventHandler implements HubEventHandler {
             Scenario scenario = optionalScenario.get();
             Long scenarioId = scenario.getId();
 
-            conditionRepository.deleteByScenarioId(scenarioId);
+            conditionRepository.deleteBy(scenarioId);
             actionRepository.deleteByScenarioId(scenarioId);
             scenarioRepository.deleteById(scenarioId);
 

@@ -18,7 +18,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ScenarioAddedEventHandler implements HubEventHandler {
 
-    private final ScenarioService scenarioService;
     private final ScenarioConditionRepository scenarioConditionRepository;
     private final ActionRepository actionRepository;
     private final ScenarioRepository scenarioRepository;
