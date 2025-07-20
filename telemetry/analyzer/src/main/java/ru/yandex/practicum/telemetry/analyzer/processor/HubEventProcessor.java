@@ -9,6 +9,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
+import ru.yandex.practicum.telemetry.analyzer.config.HubEventConsumerConfig;
 import ru.yandex.practicum.telemetry.analyzer.config.ProtoUtils;
 import ru.yandex.practicum.telemetry.analyzer.handler.HubEventHandler;
 
@@ -19,11 +20,16 @@ import java.util.Map;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class HubEventProcessor implements Runnable {
 
     private final KafkaConsumer<String, byte[]> consumer;
     private final List<HubEventHandler> handlers;
+
+    public HubEventProcessor(List<HubEventHandler> handlers) {
+        this.consumer = HubEventConsumerConfig.getHubConsumer();
+        this.handlers = handlers;
+        this.consumer.subscribe(List.of("telemetry.hubs.v1"));
+    }
 
     @Override
     public void run() {

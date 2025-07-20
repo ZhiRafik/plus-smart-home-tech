@@ -5,12 +5,10 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.springframework.context.annotation.Configuration;
 
 import java.util.Properties;
 
 @Slf4j
-@Configuration
 public class SnapshotConsumerConfig {
 
     private static final String BOOTSTRAP_SERVERS = "localhost:9092";

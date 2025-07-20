@@ -2,14 +2,14 @@ package ru.yandex.practicum.telemetry.analyzer.processor;
 
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
-import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
 import ru.yandex.practicum.telemetry.analyzer.config.AvroUtils;
+import ru.yandex.practicum.telemetry.analyzer.config.SnapshotConsumerConfig;
 import ru.yandex.practicum.telemetry.analyzer.service.ScenarioService;
 
 import java.time.Duration;
@@ -19,12 +19,11 @@ import java.util.List;
 @Component
 public class SnapshotProcessor implements Runnable {
 
-    private final Consumer<String, byte[]> consumer;
+    private final KafkaConsumer<String, byte[]> consumer;
     private final ScenarioService scenarioService;
 
-    public SnapshotProcessor(ConsumerFactory<String, byte[]> consumerFactory,
-                             ScenarioService scenarioService) {
-        this.consumer = consumerFactory.createConsumer();
+    public SnapshotProcessor(ScenarioService scenarioService) {
+        this.consumer = SnapshotConsumerConfig.getSnapshotConsumer();
         this.scenarioService = scenarioService;
         this.consumer.subscribe(List.of("telemetry.snapshots.v1"));
     }
