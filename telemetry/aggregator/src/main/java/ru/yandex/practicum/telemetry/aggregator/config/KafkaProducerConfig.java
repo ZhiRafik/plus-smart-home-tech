@@ -40,7 +40,7 @@ public class KafkaProducerConfig {
         config.forEach((key, value) -> log.info("{} = {}", key, value));
 
         Producer<String, SpecificRecordBase> producer = new KafkaProducer<>(config);
-        log.info("KafkaProducer<SpecificRecordBase> успешно создан.");
+        log.debug("KafkaProducer<SpecificRecordBase> успешно создан.");
         return producer;
     }
 
@@ -54,7 +54,7 @@ public class KafkaProducerConfig {
         config.forEach((key, value) -> log.info("{} = {}", key, value));
 
         Producer<String, SensorsSnapshotAvro> producer = new KafkaProducer<>(config);
-        log.info("KafkaProducer<SensorsSnapshotAvro> успешно создан.");
+        log.debug("KafkaProducer<SensorsSnapshotAvro> успешно создан.");
         return producer;
     }
 }
