@@ -7,7 +7,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import ru.yandex.practicum.telemetry.aggregator.config.serialization.SensorEventDeserializer;
+import ru.yandex.practicum.kafka.deserializer.SensorEventDeserializer;
 
 import java.util.Properties;
 

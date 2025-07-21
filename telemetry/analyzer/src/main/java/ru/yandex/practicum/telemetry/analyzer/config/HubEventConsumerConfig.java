@@ -1,10 +1,12 @@
 package ru.yandex.practicum.telemetry.analyzer.config;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.springframework.context.annotation.Bean;
+import ru.yandex.practicum.kafka.deserializer.HubEventDeserializer;
 
 import java.util.Properties;
 
@@ -13,27 +15,14 @@ public class HubEventConsumerConfig {
 
     private static final String BOOTSTRAP_SERVERS = "localhost:9092";
 
-    private static final KafkaConsumer<String, byte[]> HUB_CONSUMER =
-            createHubConsumer("analyzer-hub-group", ByteArrayDeserializer.class.getName());
+    @Bean
+    public KafkaConsumer<String, SpecificRecordBase> kafkaConsumerHubEvent() {
+        Properties props = new Properties();
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, HubEventDeserializer.class);
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, "analyzer-hub-group");
 
-    private static KafkaConsumer<String, byte[]> createHubConsumer(
-            String groupId, String valueDeserializerClass) {
-        Properties config = new Properties();
-        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
-        config.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
-        config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-        config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, valueDeserializerClass);
-
-        log.info("Создание KafkaConsumer для хабов с конфигурацией:");
-        config.forEach((key, value) -> log.info("{} = {}", key, value));
-
-        KafkaConsumer<String, byte[]> consumer = new KafkaConsumer<>(config);
-        log.info("Hub KafkaConsumer успешно создан и готов к работе.");
-
-        return consumer;
-    }
-
-    public static KafkaConsumer<String, byte[]> getHubConsumer() {
-        return HUB_CONSUMER;
+        return new KafkaConsumer<>(props);
     }
 }

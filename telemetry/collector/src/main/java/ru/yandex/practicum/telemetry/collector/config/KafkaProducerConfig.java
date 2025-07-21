@@ -18,7 +18,7 @@ public class KafkaProducerConfig {
     private static final String BOOTSTRAP_SERVERS = "localhost:9092";
 
     @Bean
-    public static Producer<String, SpecificRecordBase> createProducer() {
+    public Producer<String, SpecificRecordBase> createProducer() {
         Properties config = new Properties();
 
         config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
