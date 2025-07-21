@@ -8,6 +8,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
 import ru.yandex.practicum.telemetry.analyzer.service.ScenarioService;
@@ -20,6 +21,7 @@ import java.util.List;
 public class SnapshotProcessor implements Runnable {
 
     @Autowired
+    @Qualifier("kafkaConsumerSnapshot")
     private KafkaConsumer<String, SpecificRecordBase> consumer;
     @Autowired
     private ScenarioService scenarioService;

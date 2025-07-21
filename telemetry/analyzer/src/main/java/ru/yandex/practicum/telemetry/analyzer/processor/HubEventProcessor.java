@@ -8,6 +8,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
 import ru.yandex.practicum.telemetry.analyzer.handler.HubEventHandler;
@@ -24,6 +25,7 @@ public class HubEventProcessor implements Runnable {
     @Autowired
     private HubEventService hubEventService;
     @Autowired
+    @Qualifier("kafkaConsumerHubEvent")
     private KafkaConsumer<String, SpecificRecordBase> consumer;
     private final String topic = "telemetry.hubs.v1";
 
