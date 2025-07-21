@@ -26,6 +26,7 @@ public class AggregationStarter implements Runnable {
     private final AggregatorService aggregatorService;
     private final KafkaProducer<String, SpecificRecordBase> producer;
     private final KafkaConsumer<String, SpecificRecordBase> consumer;
+    private final String sensorsTopic = "telemetry.sensors.v1";
     private final String snapshotTopic = "telemetry.snapshots.v1";
 
     private volatile boolean running = true;
@@ -33,8 +34,8 @@ public class AggregationStarter implements Runnable {
     @Override
     public void run() {
         try {
-            log.info("Подписка на топик " + snapshotTopic);
-            consumer.subscribe(List.of(snapshotTopic));
+            log.info("Подписка на топик " + sensorsTopic);
+            consumer.subscribe(List.of(sensorsTopic));
 
 
             while (running) {
