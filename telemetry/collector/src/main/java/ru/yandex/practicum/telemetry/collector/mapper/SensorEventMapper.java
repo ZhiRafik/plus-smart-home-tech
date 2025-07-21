@@ -25,7 +25,7 @@ public class SensorEventMapper {
                 yield SensorEventAvro.newBuilder()
                         .setId(id)
                         .setHubId(hubId)
-                        .setTimestamp(Instant.ofEpochSecond(timestamp))
+                        .setTimestamp(Instant.ofEpochMilli(timestamp))
                         .setPayload(payload)
                         .build();
             }
@@ -41,7 +41,7 @@ public class SensorEventMapper {
                 yield SensorEventAvro.newBuilder()
                         .setId(id)
                         .setHubId(hubId)
-                        .setTimestamp(Instant.ofEpochSecond(timestamp))
+                        .setTimestamp(Instant.ofEpochMilli(timestamp))
                         .setPayload(payload)
                         .build();
             }
@@ -56,7 +56,7 @@ public class SensorEventMapper {
                 yield SensorEventAvro.newBuilder()
                         .setId(id)
                         .setHubId(hubId)
-                        .setTimestamp(Instant.ofEpochSecond(timestamp))
+                        .setTimestamp(Instant.ofEpochMilli(timestamp))
                         .setPayload(payload)
                         .build();
             }
@@ -72,7 +72,7 @@ public class SensorEventMapper {
                 yield SensorEventAvro.newBuilder()
                         .setId(id)
                         .setHubId(hubId)
-                        .setTimestamp(Instant.ofEpochSecond(timestamp))
+                        .setTimestamp(Instant.ofEpochMilli(timestamp))
                         .setPayload(payload)
                         .build();
             }
@@ -86,7 +86,7 @@ public class SensorEventMapper {
                 yield SensorEventAvro.newBuilder()
                         .setId(id)
                         .setHubId(hubId)
-                        .setTimestamp(Instant.ofEpochSecond(timestamp))
+                        .setTimestamp(Instant.ofEpochMilli(timestamp))
                         .setPayload(payload)
                         .build();
             }

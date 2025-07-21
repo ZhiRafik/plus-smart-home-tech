@@ -24,7 +24,7 @@ public class HubEventMapper {
 
                 yield HubEventAvro.newBuilder()
                         .setHubId(hubId)
-                        .setTimestamp(Instant.ofEpochSecond(timestamp))
+                        .setTimestamp(Instant.ofEpochMilli(timestamp))
                         .setPayload(payload)
                         .build();
             }
@@ -37,7 +37,7 @@ public class HubEventMapper {
 
                 yield HubEventAvro.newBuilder()
                         .setHubId(hubId)
-                        .setTimestamp(Instant.ofEpochSecond(timestamp))
+                        .setTimestamp(Instant.ofEpochMilli(timestamp))
                         .setPayload(payload)
                         .build();
             }
@@ -78,7 +78,7 @@ public class HubEventMapper {
 
                 yield HubEventAvro.newBuilder()
                         .setHubId(hubId)
-                        .setTimestamp(Instant.ofEpochSecond(timestamp))
+                        .setTimestamp(Instant.ofEpochMilli(timestamp))
                         .setPayload(payload)
                         .build();
             }
@@ -91,7 +91,7 @@ public class HubEventMapper {
 
                 yield HubEventAvro.newBuilder()
                         .setHubId(hubId)
-                        .setTimestamp(Instant.ofEpochSecond(timestamp))
+                        .setTimestamp(Instant.ofEpochMilli(timestamp))
                         .setPayload(payload)
                         .build();
             }
