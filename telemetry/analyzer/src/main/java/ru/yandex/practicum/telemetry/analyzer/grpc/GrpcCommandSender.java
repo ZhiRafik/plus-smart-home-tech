@@ -1,6 +1,7 @@
 package ru.yandex.practicum.telemetry.analyzer.grpc;
 
 import com.google.protobuf.Timestamp;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.springframework.stereotype.Service;
@@ -16,13 +17,16 @@ public class GrpcCommandSender {
     @GrpcClient("hub-router")
     private HubRouterControllerBlockingStub hubRouterClient;
 
-    public void sendDeviceAction(DeviceActionRequest request) {
-        log.info("Отправка gRPC-команды: hubId={}, scenario='{}', action={}",
-                request.getHubId(),
-                request.getScenarioName(),
-                request.getAction()
-        );
-        hubRouterClient.handleDeviceAction(request);
+    public void sendDeviceActions(List<DeviceActionRequest> actions) {
+        if (actions.isEmpty()) {
+            log.debug("Получен на обработку пусток список действий");
+            return;
+        }
+
+        for (DeviceActionRequest action : actions) {
+            log.debug("Отправляю действие: {}", action);
+            hubRouterClient.handleDeviceAction(action);
+        }
     }
 
     private Timestamp currentTimestamp() {

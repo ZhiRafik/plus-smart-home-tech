@@ -10,7 +10,9 @@ import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.grpc.telemetry.event.DeviceActionRequest;
 import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
+import ru.yandex.practicum.telemetry.analyzer.grpc.GrpcCommandSender;
 import ru.yandex.practicum.telemetry.analyzer.service.ScenarioService;
 
 import java.time.Duration;
@@ -23,6 +25,9 @@ public class SnapshotProcessor implements Runnable {
     @Autowired
     @Qualifier("kafkaConsumerSnapshot")
     private KafkaConsumer<String, SpecificRecordBase> consumer;
+
+    @Autowired
+    private GrpcCommandSender grpcSender;
     @Autowired
     private ScenarioService scenarioService;
     private final String topic = "telemetry.snapshots.v1";
@@ -31,6 +36,7 @@ public class SnapshotProcessor implements Runnable {
     public void run() {
         log.info("Запуск SnapshotProcessor...");
         try {
+            log.info("Анализатор в SnapshotProcessor подписался на топик: {}", topic);
             consumer.subscribe(List.of(topic));
             while (true) {
                 ConsumerRecords<String, SpecificRecordBase> records = consumer.poll(Duration.ofMillis(100));
@@ -40,7 +46,10 @@ public class SnapshotProcessor implements Runnable {
                         continue;
                     }
                     log.trace("Обрабатываю snapshot");
-                    scenarioService.processSnapshot(sensorsSnapshotAvro);
+                    List<DeviceActionRequest> actionRequests = scenarioService.processSnapshot(sensorsSnapshotAvro);
+
+                    grpcSender.sendDeviceActions(actionRequests);
+                    log.info("Анализатор отправил запросы: {} ", actionRequests);
                 }
                 consumer.commitSync();
             }
