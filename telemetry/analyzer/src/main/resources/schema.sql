@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS scenarios (
 -- создаём таблицу sensors
 CREATE TABLE IF NOT EXISTS sensors (
     id VARCHAR PRIMARY KEY,
-    hub_id VARCHAR,
+    hub_id VARCHAR
 );
 
 -- создаём таблицу conditions
