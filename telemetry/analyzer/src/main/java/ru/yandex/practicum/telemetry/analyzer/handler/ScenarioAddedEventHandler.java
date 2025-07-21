@@ -1,11 +1,10 @@
-package ru.practicum.service.handler;
+package ru.yandex.practicum.telemetry.analyzer.handler;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.kafka.telemetry.event.ScenarioAddedEventAvro;
-import ru.yandex.practicum.telemetry.analyzer.handler.HubEventHandler;
 import ru.yandex.practicum.telemetry.analyzer.model.*;
 import ru.yandex.practicum.telemetry.analyzer.repository.*;
 

@@ -9,6 +9,7 @@ import lombok.Data;
 @Builder
 @Table(name = "sensors")
 public class Sensor {
+
     @Id
     private String id;
 

@@ -6,5 +6,6 @@ import ru.yandex.practicum.telemetry.analyzer.model.ScenarioActionLink;
 import java.util.List;
 
 public interface ScenarioActionLinkRepository extends JpaRepository<ScenarioActionLink, Long> {
+
     List<ScenarioActionLink> findAllByScenarioId(Long scenarioId);
 }

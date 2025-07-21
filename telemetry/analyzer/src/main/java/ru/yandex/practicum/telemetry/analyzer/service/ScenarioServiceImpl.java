@@ -22,8 +22,8 @@ import java.util.*;
 public class ScenarioServiceImpl implements ScenarioService {
 
     private final ScenarioRepository scenarioRepository;
-    private final ScenarioConditionRepository scenarioConditionRepository;
-    private final ScenarioActionRepository scenarioActionRepository;
+    private final ScenarioConditionLinkRepository scenarioConditionRepository;
+    private final ScenarioActionLinkRepository scenarioActionRepository;
     private final GrpcCommandSender grpcCommandSender;
 
     @Override
@@ -37,7 +37,7 @@ public class ScenarioServiceImpl implements ScenarioService {
         log.debug("Найдено {} сценариев для хаба {}", scenarios.size(), hubId);
 
         for (Scenario scenario : scenarios) {
-            List<ScenarioCondition> conditions = scenarioConditionRepository.findByScenarioId(scenario.getId());
+            List<ScenarioConditionLink> conditions = scenarioConditionRepository.findByScenarioId(scenario.getId());
 
             boolean allConditionsTrue = conditions.stream().allMatch(sc -> {
                 String sensorId = sc.getSensor().getId();
@@ -53,7 +53,7 @@ public class ScenarioServiceImpl implements ScenarioService {
 
             if (allConditionsTrue) {
                 log.info("Сценарий '{}' активирован", scenario.getName());
-                List<ScenarioAction> actions = scenarioActionRepository.findByScenarioId(scenario.getId());
+                List<ScenarioActionLink> actions = scenarioActionRepository.findAllByScenarioId(scenario.getId());
                 actions.forEach(action -> {
                     DeviceActionRequest request = DeviceActionRequest.newBuilder()
                             .setHubId(hubId)

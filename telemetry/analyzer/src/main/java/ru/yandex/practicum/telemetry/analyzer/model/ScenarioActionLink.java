@@ -16,6 +16,7 @@ import java.io.Serializable;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @ToString
 public class ScenarioActionLink {
+
     @EmbeddedId
     ScenarioActionId id;
 

@@ -7,6 +7,7 @@ import lombok.Data;
 @Entity
 @Table(name = "scenarios", uniqueConstraints = @UniqueConstraint(columnNames = {"hub_id", "name"}))
 public class Scenario {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

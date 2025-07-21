@@ -4,6 +4,7 @@ import org.apache.avro.specific.SpecificRecordBase;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +30,6 @@ public class HubEventDispatcher {
 
         @SuppressWarnings("unchecked")
         HubEventHandler<SpecificRecordBase> typedHandler = (HubEventHandler<SpecificRecordBase>) handler;
-        typedHandler.handle(payload, event.getHubId().toString(), event.getTimestamp());
+        typedHandler.handle(payload, event.getHubId().toString(), Instant.ofEpochMilli(event.getTimestamp()));
     }
 }

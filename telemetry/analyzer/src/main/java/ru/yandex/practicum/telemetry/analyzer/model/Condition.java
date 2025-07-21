@@ -9,6 +9,7 @@ import lombok.Data;
 @Builder
 @Table(name = "conditions")
 public class Condition {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
