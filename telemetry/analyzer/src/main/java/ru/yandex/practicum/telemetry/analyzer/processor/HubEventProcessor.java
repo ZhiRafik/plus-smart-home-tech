@@ -1,16 +1,16 @@
 package ru.yandex.practicum.telemetry.analyzer.processor;
 
 import jakarta.annotation.PreDestroy;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
-import ru.yandex.practicum.telemetry.analyzer.config.HubEventConsumerConfig;
-import ru.yandex.practicum.telemetry.analyzer.config.ProtoUtils;
+import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
 import ru.yandex.practicum.telemetry.analyzer.handler.HubEventHandler;
 
 import java.time.Duration;
@@ -22,43 +22,55 @@ import java.util.Map;
 @Component
 public class HubEventProcessor implements Runnable {
 
-    private final KafkaConsumer<String, byte[]> consumer;
-    private final List<HubEventHandler> handlers;
+    @Autowired
+    private KafkaConsumer<String, SpecificRecordBase> consumer;
+    @Autowired
+    private List<HubEventHandler> handlers;
+    private final String topic = "telemetry.hubs.v1";
 
     public HubEventProcessor(List<HubEventHandler> handlers) {
-        this.consumer = HubEventConsumerConfig.getHubConsumer();
         this.handlers = handlers;
-        this.consumer.subscribe(List.of("telemetry.hubs.v1"));
     }
 
     @Override
     public void run() {
-        log.info("Запуск HubEventProcessor...");
-
-        Map<HubEventProto.PayloadCase, HubEventHandler> handlerMap = new HashMap<>();
-        for (HubEventHandler handler : handlers) {
-            handlerMap.put(handler.getMessageType(), handler);
-        }
+        log.info("Запуск HubEventProcessor с Avro...");
 
         try {
+            consumer.subscribe(List.of(topic));
             while (true) {
-                ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(500));
-                for (ConsumerRecord<String, byte[]> record : records) {
-                    try {
-                        HubEventProto event = ProtoUtils.deserialize(record.value(), HubEventProto.parser());
-                        HubEventProto.PayloadCase type = event.getPayloadCase();
+                ConsumerRecords<String, SpecificRecordBase> records = consumer.poll(Duration.ofMillis(100));
 
-                        HubEventHandler handler = handlerMap.get(type);
-                        if (handler != null) {
+                for (ConsumerRecord<String, SpecificRecordBase> record : records) {
+                    if (!(record.value() instanceof HubEventAvro event)) {
+                        log.warn("Неожиданный тип сообщения: {}", record.value().getClass().getSimpleName());
+                        continue;
+                    }
+
+                    Object payload = event.getPayload();
+
+                    boolean handled = false;
+                    for (HubEventHandler handler : handlers) {
+                        if (handler.supports(payload)) {
+                            log.debug("Обработка события {} для хаба {}", payload.getClass().getSimpleName(), event.getHubId());
                             handler.handle(event);
-                        } else {
-                            log.warn("Нет обработчика для события типа {}", type);
+                            handled = true;
+                            break;
                         }
+                    }
 
-                    } catch (Exception e) {
-                        log.error("Ошибка при десериализации или обработке события: {}", e.getMessage(), e);
+                    if (!handled) {
+                        log.warn("Нет обработчика для события: {}", payload.getClass().getSimpleName());
                     }
                 }
+
+                consumer.commitAsync((offsets, exception) -> {
+                    if (exception != null) {
+                        log.error("Ошибка при commitAsync", exception);
+                    } else {
+                        log.trace("Коммит смещений: {}", offsets);
+                    }
+                });
             }
         } catch (WakeupException e) {
             log.info("Получен сигнал wakeup, завершаем HubEventProcessor...");
@@ -69,6 +81,7 @@ public class HubEventProcessor implements Runnable {
             log.info("Kafka consumer закрыт");
         }
     }
+
 
     @PreDestroy
     public void shutdown() {

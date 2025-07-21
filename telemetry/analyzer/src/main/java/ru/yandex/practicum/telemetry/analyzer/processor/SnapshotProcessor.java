@@ -2,14 +2,14 @@ package ru.yandex.practicum.telemetry.analyzer.processor;
 
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
-import ru.yandex.practicum.telemetry.analyzer.config.AvroUtils;
-import ru.yandex.practicum.telemetry.analyzer.config.SnapshotConsumerConfig;
 import ru.yandex.practicum.telemetry.analyzer.service.ScenarioService;
 
 import java.time.Duration;
@@ -19,29 +19,26 @@ import java.util.List;
 @Component
 public class SnapshotProcessor implements Runnable {
 
-    private final KafkaConsumer<String, byte[]> consumer;
-    private final ScenarioService scenarioService;
-
-    public SnapshotProcessor(ScenarioService scenarioService) {
-        this.consumer = SnapshotConsumerConfig.getSnapshotConsumer();
-        this.scenarioService = scenarioService;
-        this.consumer.subscribe(List.of("telemetry.snapshots.v1"));
-    }
+    @Autowired
+    private KafkaConsumer<String, SpecificRecordBase> consumer;
+    @Autowired
+    private ScenarioService scenarioService;
+    private final String topic = "telemetry.snapshots.v1";
 
     @Override
     public void run() {
         log.info("Запуск SnapshotProcessor...");
         try {
+            consumer.subscribe(List.of(topic));
             while (true) {
-                ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(500));
-                for (ConsumerRecord<String, byte[]> record : records) {
-                    try {
-                        log.trace("Обрабатываю snapshot");
-                        SensorsSnapshotAvro snapshot = AvroUtils.deserialize(record.value(), SensorsSnapshotAvro.class);
-                        scenarioService.processSnapshot(snapshot);
-                    } catch (Exception e) {
-                        log.error("Ошибка при обработке снапшота", e);
+                ConsumerRecords<String, SpecificRecordBase> records = consumer.poll(Duration.ofMillis(100));
+                for (ConsumerRecord<String, SpecificRecordBase> record : records) {
+                    if(!(record.value() instanceof SensorsSnapshotAvro sensorsSnapshotAvro)) {
+                        log.warn("Неожиданный тип данных: {}", record.value().getClass().getSimpleName());
+                        continue;
                     }
+                    log.trace("Обрабатываю snapshot");
+                    scenarioService.processSnapshot(sensorsSnapshotAvro);
                 }
                 consumer.commitSync();
             }

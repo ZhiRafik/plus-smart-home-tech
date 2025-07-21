@@ -2,13 +2,12 @@ package ru.yandex.practicum.telemetry.collector.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
 import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
-import ru.yandex.practicum.telemetry.serialization.GeneralAvroSerializer;
+import ru.yandex.practicum.kafka.serializer.GeneralAvroSerializer;
 
 import java.util.Properties;
 
