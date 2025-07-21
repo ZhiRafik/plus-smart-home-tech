@@ -7,6 +7,7 @@ import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.errors.WakeupException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
 import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
@@ -26,16 +27,18 @@ public class AggregationStarter implements Runnable {
     private final AggregatorService aggregatorService;
     private final KafkaProducer<String, SpecificRecordBase> producer;
     private final KafkaConsumer<String, SpecificRecordBase> consumer;
-    private final String sensorsTopic = "telemetry.sensors.v1";
-    private final String snapshotTopic = "telemetry.snapshots.v1";
+    @Value("${kafka.topics.sensor-events}")
+    private String sensorTopic;
+    @Value("${kafka.topics.sensor-snapshot}")
+    private String snapshotTopic;
 
     private volatile boolean running = true;
 
     @Override
     public void run() {
         try {
-            log.info("Подписка на топик " + sensorsTopic);
-            consumer.subscribe(List.of(sensorsTopic));
+            log.info("Подписка на топик " + sensorTopic);
+            consumer.subscribe(List.of(sensorTopic));
 
 
             while (running) {
@@ -53,18 +56,14 @@ public class AggregationStarter implements Runnable {
 
                     Optional<SensorsSnapshotAvro> maybeSnapshot = aggregatorService.updateState(event);
 
-                    if (maybeSnapshot.isPresent()) {
-                        SensorsSnapshotAvro snapshot = maybeSnapshot.get();
-                        log.debug("Создан снапшот для hubId={}: {}", snapshot.getHubId(), snapshot);
+                    maybeSnapshot.ifPresent(snapshot -> {
                         try {
                             producer.send(new ProducerRecord<>(snapshotTopic, snapshot));
-                            log.info("Обновлён снэпшот для хаба {} отправлен {}", snapshot.getHubId(), snapshot);
+                            log.info("Снэпшот для хаба {} отправлен {}", snapshot.getHubId(), snapshot);
                         } catch (Exception e) {
-                            log.error("Ошибка при отправке снэпшота в кафку: ", e);
+                            log.error("Ошибка при отправлении снэпшота в кафку", e);
                         }
-                    } else {
-                        log.debug("Снапшот не сформирован для события hubId={}", event.getHubId());
-                    }
+                    });
                 }
 
                 log.trace("Отправка асинхронного коммита...");

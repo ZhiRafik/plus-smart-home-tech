@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotNull;
 import ru.yandex.practicum.grpc.telemetry.event.*;
 import ru.yandex.practicum.kafka.telemetry.event.*;
 
+import java.time.Instant;
+
 public class SensorEventMapper {
 
     public static @NotNull SensorEventAvro mapToAvro(@NotNull SensorEventProto proto) {
@@ -23,7 +25,7 @@ public class SensorEventMapper {
                 yield SensorEventAvro.newBuilder()
                         .setId(id)
                         .setHubId(hubId)
-                        .setTimestamp(timestamp)
+                        .setTimestamp(Instant.ofEpochSecond(timestamp))
                         .setPayload(payload)
                         .build();
             }
@@ -39,7 +41,7 @@ public class SensorEventMapper {
                 yield SensorEventAvro.newBuilder()
                         .setId(id)
                         .setHubId(hubId)
-                        .setTimestamp(timestamp)
+                        .setTimestamp(Instant.ofEpochSecond(timestamp))
                         .setPayload(payload)
                         .build();
             }
@@ -54,7 +56,7 @@ public class SensorEventMapper {
                 yield SensorEventAvro.newBuilder()
                         .setId(id)
                         .setHubId(hubId)
-                        .setTimestamp(timestamp)
+                        .setTimestamp(Instant.ofEpochSecond(timestamp))
                         .setPayload(payload)
                         .build();
             }
@@ -70,7 +72,7 @@ public class SensorEventMapper {
                 yield SensorEventAvro.newBuilder()
                         .setId(id)
                         .setHubId(hubId)
-                        .setTimestamp(timestamp)
+                        .setTimestamp(Instant.ofEpochSecond(timestamp))
                         .setPayload(payload)
                         .build();
             }
@@ -84,7 +86,7 @@ public class SensorEventMapper {
                 yield SensorEventAvro.newBuilder()
                         .setId(id)
                         .setHubId(hubId)
-                        .setTimestamp(timestamp)
+                        .setTimestamp(Instant.ofEpochSecond(timestamp))
                         .setPayload(payload)
                         .build();
             }
