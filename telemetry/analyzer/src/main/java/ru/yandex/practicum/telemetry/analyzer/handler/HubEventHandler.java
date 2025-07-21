@@ -1,9 +1,12 @@
 package ru.yandex.practicum.telemetry.analyzer.handler;
 
-import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
+import org.apache.avro.specific.SpecificRecordBase;
 
-public interface HubEventHandler {
-    HubEventProto.PayloadCase getMessageType();
-    void handle(HubEventProto event);
+import java.time.Instant;
+
+public interface HubEventHandler <T extends SpecificRecordBase> {
+
+    Class<T> getMessageType();
+    void handle(T payload, String hubId, Instant timestamp);
 }
 

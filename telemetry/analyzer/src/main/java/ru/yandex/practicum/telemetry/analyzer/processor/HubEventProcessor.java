@@ -9,28 +9,23 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
 import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
 import ru.yandex.practicum.telemetry.analyzer.handler.HubEventHandler;
+import ru.yandex.practicum.telemetry.analyzer.service.HubEventService;
 
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+
 
 @Slf4j
 @Component
 public class HubEventProcessor implements Runnable {
 
     @Autowired
-    private KafkaConsumer<String, SpecificRecordBase> consumer;
+    private HubEventService hubEventService;
     @Autowired
-    private List<HubEventHandler> handlers;
+    private KafkaConsumer<String, SpecificRecordBase> consumer;
     private final String topic = "telemetry.hubs.v1";
-
-    public HubEventProcessor(List<HubEventHandler> handlers) {
-        this.handlers = handlers;
-    }
 
     @Override
     public void run() {
@@ -42,35 +37,15 @@ public class HubEventProcessor implements Runnable {
                 ConsumerRecords<String, SpecificRecordBase> records = consumer.poll(Duration.ofMillis(100));
 
                 for (ConsumerRecord<String, SpecificRecordBase> record : records) {
+
                     if (!(record.value() instanceof HubEventAvro event)) {
                         log.warn("Неожиданный тип сообщения: {}", record.value().getClass().getSimpleName());
                         continue;
                     }
 
-                    Object payload = event.getPayload();
-
-                    boolean handled = false;
-                    for (HubEventHandler handler : handlers) {
-                        if (handler.supports(payload)) {
-                            log.debug("Обработка события {} для хаба {}", payload.getClass().getSimpleName(), event.getHubId());
-                            handler.handle(event);
-                            handled = true;
-                            break;
-                        }
-                    }
-
-                    if (!handled) {
-                        log.warn("Нет обработчика для события: {}", payload.getClass().getSimpleName());
-                    }
+                    hubEventService.processEvent(event);
                 }
-
-                consumer.commitAsync((offsets, exception) -> {
-                    if (exception != null) {
-                        log.error("Ошибка при commitAsync", exception);
-                    } else {
-                        log.trace("Коммит смещений: {}", offsets);
-                    }
-                });
+                consumer.commitAsync();
             }
         } catch (WakeupException e) {
             log.info("Получен сигнал wakeup, завершаем HubEventProcessor...");

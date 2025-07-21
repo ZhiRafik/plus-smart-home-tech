@@ -1,11 +1,12 @@
 package ru.yandex.practicum.telemetry.analyzer.model;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Data;
-import ru.yandex.practicum.grpc.telemetry.event.enums.DeviceTypeProto;
 
 @Data
 @Entity
+@Builder
 @Table(name = "sensors")
 public class Sensor {
     @Id

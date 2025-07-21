@@ -1,68 +1,125 @@
-package ru.yandex.practicum.telemetry.analyzer.handler;
+package ru.practicum.service.handler;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
-import ru.yandex.practicum.grpc.telemetry.event.ScenarioAddedEventProto;
+import ru.yandex.practicum.kafka.telemetry.event.ScenarioAddedEventAvro;
+import ru.yandex.practicum.telemetry.analyzer.handler.HubEventHandler;
 import ru.yandex.practicum.telemetry.analyzer.model.*;
-import ru.yandex.practicum.telemetry.analyzer.repository.ActionRepository;
-import ru.yandex.practicum.telemetry.analyzer.repository.ScenarioConditionRepository;
-import ru.yandex.practicum.telemetry.analyzer.repository.ScenarioRepository;
+import ru.yandex.practicum.telemetry.analyzer.repository.*;
 
-import java.util.UUID;
+import java.time.Instant;
+import java.util.List;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ScenarioAddedEventHandler implements HubEventHandler {
+public class ScenarioAddedEventHandler implements HubEventHandler<ScenarioAddedEventAvro> {
 
-    private final ScenarioConditionRepository scenarioConditionRepository;
-    private final ActionRepository actionRepository;
     private final ScenarioRepository scenarioRepository;
+    private final ActionRepository actionRepository;
+    private final ConditionRepository conditionRepository;
+    private final ScenarioConditionLinkRepository scenarioConditionLinkRepository;
+    private final ScenarioActionLinkRepository scenarioActionLinkRepository;
 
+    @Transactional
     @Override
-    public HubEventProto.PayloadCase getMessageType() {
-        return HubEventProto.PayloadCase.SCENARIO_ADDED;
+    public void handle(ScenarioAddedEventAvro payload, String hubId, Instant timestamp) {
+        Scenario scenarioEntity = new Scenario();
+        scenarioEntity.setHubId(hubId);
+        scenarioEntity.setName(payload.getName().toString());
+
+        log.info("Save ScenarioAddedEventAvro: {}", payload);
+        log.info("hubId: {}", hubId);
+        log.info("timestamp: {}", timestamp);
+
+
+        List<Condition> conditionEntityList = payload.getConditions().stream()
+                .map(avroCondition -> Condition.builder()
+                        .type(avroCondition.getType().toString())
+                        .value(switch (avroCondition.getValue()) {
+                            case null -> null;
+                            case Integer intValue -> intValue;
+                            case Boolean boolValue -> boolValue ? 1 : 0;
+                            default -> throw new IllegalArgumentException(
+                                    "Unsupported value type: " + avroCondition.getValue().getClass());
+                        })
+                        .operation(avroCondition.getOperation().toString())
+                        .build())
+                .toList();
+
+        List<ScenarioConditionLink> conditionLinks = payload.getConditions().stream()
+                .map(avroCondition -> {
+
+                    String sensorId = avroCondition.getSensorId().toString();
+                    Sensor sensor = Sensor.builder()
+                            .id(sensorId)
+                            .hubId(hubId)
+                            .build();
+
+                    Condition condition = conditionEntityList.get(payload.getConditions().indexOf(avroCondition));
+
+                    return ScenarioConditionLink.builder()
+                            .id(new ScenarioConditionLink.ScenarioConditionId(
+                                    scenarioEntity.getId(),
+                                    sensor.getId(),
+                                    condition.getId()
+                            ))
+                            .scenario(scenarioEntity)
+                            .sensor(sensor)
+                            .condition(condition)
+                            .build();
+                })
+                .toList();
+
+        List<Action> actionEntityList = payload.getActions().stream()
+                .map(avroAction -> Action.builder()
+                        .type(avroAction.getType().toString())
+                        .value(avroAction.getValue())
+                        .build())
+                .toList();
+
+        List<ScenarioActionLink> actionLinks = payload.getActions().stream()
+                .map(avroAction -> {
+                    String sensorId = avroAction.getSensorId().toString();
+                    Sensor sensor = Sensor.builder()
+                            .id(sensorId)
+                            .hubId(hubId)
+                            .build();
+                    Action Action = actionEntityList.get(payload.getActions().indexOf(avroAction));
+                    return ScenarioActionLink.builder()
+                            .id(new ScenarioActionLink.ScenarioActionId(
+                                    scenarioEntity.getId(),
+                                    sensor.getId(),
+                                    Action.getId()
+                            ))
+                            .scenario(scenarioEntity)
+                            .sensor(sensor)
+                            .action(Action)
+                            .build();
+                })
+                .toList();
+
+        log.info("Save entity: {}", scenarioEntity);
+        scenarioRepository.save(scenarioEntity);
+
+        log.info("Save conditionList: {}", conditionEntityList);
+        conditionRepository.saveAll(conditionEntityList);
+
+        log.info("Save action: {}", actionEntityList);
+        actionRepository.saveAll(actionEntityList);
+
+        log.info("Save condition links: {}", conditionLinks);
+        scenarioConditionLinkRepository.saveAll(conditionLinks);
+
+        log.info("Save action links: {}", actionLinks);
+        scenarioActionLinkRepository.saveAll(actionLinks);
+
     }
 
     @Override
-    public void handle(HubEventProto event) {
-        log.info("Получено событие: {}", event);
-        Scenario scenario = new Scenario();
-        ScenarioAddedEventProto payload = event.getScenarioAdded();
-        scenario.setHubId(event.getHubId());
-        scenario.setName(payload.getName());
-
-        for (var protoCond : payload.getConditionList()) {
-            Condition condition = new Condition();
-            condition.setType(protoCond.getType().name());
-            condition.setOperation(protoCond.getOperation().name());
-            condition.setValue(protoCond.getBoolValue() ? 1 : 0); // boolean → int
-
-            Sensor sensor = new Sensor();
-            sensor.setId(String.valueOf(UUID.fromString(protoCond.getSensorId())));
-
-            ScenarioCondition scenarioCondition = new ScenarioCondition();
-            scenarioCondition.setScenario(scenario);
-            scenarioCondition.setSensor(sensor);
-            scenarioCondition.setCondition(condition);
-
-            scenarioConditionRepository.save(scenarioCondition);
-        }
-
-
-        for (var protoAction : payload.getActionList()) {
-            Action action = new Action();
-            action.setType(protoAction.getType().name());
-            action.setValue(protoAction.getValue());
-            action.setSensorId(protoAction.getSensorId());
-            action.setScenario(scenario); // установим связь
-
-            actionRepository.save(action);
-        }
-
-        scenarioRepository.save(scenario);
-        log.info("Добавлен сценарий: {}", scenario.getName());
+    public Class<ScenarioAddedEventAvro> getMessageType() {
+        return ScenarioAddedEventAvro.class;
     }
 }

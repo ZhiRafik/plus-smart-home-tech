@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import ru.yandex.practicum.grpc.telemetry.event.*;
 import ru.yandex.practicum.kafka.telemetry.event.*;
 
+import java.time.Instant;
 import java.util.List;
 
 public class HubEventMapper {
@@ -23,7 +24,7 @@ public class HubEventMapper {
 
                 yield HubEventAvro.newBuilder()
                         .setHubId(hubId)
-                        .setTimestamp(timestamp)
+                        .setTimestamp(Instant.ofEpochSecond(timestamp))
                         .setPayload(payload)
                         .build();
             }
@@ -36,7 +37,7 @@ public class HubEventMapper {
 
                 yield HubEventAvro.newBuilder()
                         .setHubId(hubId)
-                        .setTimestamp(timestamp)
+                        .setTimestamp(Instant.ofEpochSecond(timestamp))
                         .setPayload(payload)
                         .build();
             }
@@ -77,7 +78,7 @@ public class HubEventMapper {
 
                 yield HubEventAvro.newBuilder()
                         .setHubId(hubId)
-                        .setTimestamp(timestamp)
+                        .setTimestamp(Instant.ofEpochSecond(timestamp))
                         .setPayload(payload)
                         .build();
             }
@@ -90,7 +91,7 @@ public class HubEventMapper {
 
                 yield HubEventAvro.newBuilder()
                         .setHubId(hubId)
-                        .setTimestamp(timestamp)
+                        .setTimestamp(Instant.ofEpochSecond(timestamp))
                         .setPayload(payload)
                         .build();
             }
