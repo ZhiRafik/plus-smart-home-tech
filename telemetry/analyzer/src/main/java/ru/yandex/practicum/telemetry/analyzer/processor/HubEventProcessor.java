@@ -68,6 +68,4 @@ public class HubEventProcessor implements Runnable {
         log.info("Завершение HubEventProcessor...");
         consumer.wakeup();
     }
-
-
 }

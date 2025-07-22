@@ -20,7 +20,7 @@ public class AnalyzerApplication {
         // от пользовательских хабов
         Thread hubEventsThread = new Thread(hubEventProcessor);
         hubEventsThread.setName("HubEventHandlerThread");
-        hubEventsThread.run();
+        hubEventsThread.start();
 
         // В текущем потоке начинаем обработку
         // снимков состояния датчиков
