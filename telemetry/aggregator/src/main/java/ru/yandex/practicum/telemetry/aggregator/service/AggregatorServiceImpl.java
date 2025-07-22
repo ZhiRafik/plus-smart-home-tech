@@ -24,7 +24,7 @@ public class AggregatorServiceImpl implements AggregatorService {
             return newSnapshot;
         });
 
-        Map<CharSequence, SensorStateAvro> states = snapshot.getSensorsState();
+        Map<String, SensorStateAvro> states = snapshot.getSensorsState();
         SensorStateAvro oldState = states.get(event.getId());
 
         if (oldState != null) {

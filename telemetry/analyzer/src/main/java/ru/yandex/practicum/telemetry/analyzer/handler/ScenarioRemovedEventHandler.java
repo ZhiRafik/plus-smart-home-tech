@@ -14,9 +14,9 @@ public class ScenarioRemovedEventHandler implements HubEventHandler<ScenarioRemo
 
     @Override
     public void handle(ScenarioRemovedEventAvro payload, String hubId, Instant timestamp) {
-        scenarioRepository.findByHubIdAndName(hubId, payload.getName().toString())
+        scenarioRepository.findByHubIdAndName(hubId, payload.getName())
                 .ifPresent(
-                        s-> scenarioRepository.deleteByHubIdAndName(hubId, payload.getName().toString())
+                        s-> scenarioRepository.deleteByHubIdAndName(hubId, payload.getName())
                 );
     }
 

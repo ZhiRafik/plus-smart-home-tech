@@ -30,6 +30,6 @@ public class HubEventDispatcher {
 
         @SuppressWarnings("unchecked")
         HubEventHandler<SpecificRecordBase> typedHandler = (HubEventHandler<SpecificRecordBase>) handler;
-        typedHandler.handle(payload, event.getHubId().toString(), event.getTimestamp());
+        typedHandler.handle(payload, event.getHubId(), event.getTimestamp());
     }
 }

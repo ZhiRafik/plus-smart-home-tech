@@ -26,14 +26,14 @@ public class HubEventProcessor implements Runnable {
     @Autowired
     @Qualifier("kafkaConsumerHubEvent")
     private KafkaConsumer<String, SpecificRecordBase> consumer;
-    private final String topic = "telemetry.hubs.v1";
+    private final String TOPIC = "telemetry.hubs.v1";
 
     @Override
     public void run() {
         log.info("Запуск HubEventProcessor с Avro...");
 
         try {
-            consumer.subscribe(List.of(topic));
+            consumer.subscribe(List.of(TOPIC));
             while (true) {
                 ConsumerRecords<String, SpecificRecordBase> records = consumer.poll(Duration.ofMillis(100));
 

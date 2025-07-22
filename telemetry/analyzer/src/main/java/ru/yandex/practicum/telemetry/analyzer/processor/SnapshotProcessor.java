@@ -30,14 +30,14 @@ public class SnapshotProcessor implements Runnable {
     private GrpcCommandSender grpcSender;
     @Autowired
     private ScenarioService scenarioService;
-    private final String topic = "telemetry.snapshots.v1";
+    private final String TOPIC = "telemetry.snapshots.v1";
 
     @Override
     public void run() {
         log.info("Запуск SnapshotProcessor...");
         try {
-            log.info("Анализатор в SnapshotProcessor подписался на топик: {}", topic);
-            consumer.subscribe(List.of(topic));
+            log.info("Анализатор в SnapshotProcessor подписался на топик: {}", TOPIC);
+            consumer.subscribe(List.of(TOPIC));
             while (true) {
                 ConsumerRecords<String, SpecificRecordBase> records = consumer.poll(Duration.ofMillis(100));
                 for (ConsumerRecord<String, SpecificRecordBase> record : records) {

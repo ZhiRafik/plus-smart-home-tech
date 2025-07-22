@@ -17,7 +17,7 @@ public class DeviceRemovedEventHandler implements HubEventHandler<DeviceRemovedE
 
     @Override
     public void handle(DeviceRemovedEventAvro payload, String hubId, Instant timestamp) {
-        sensorRepository.deleteById(payload.getId().toString());
+        sensorRepository.deleteById(payload.getId());
     }
 
     @Override

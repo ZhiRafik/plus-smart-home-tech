@@ -27,7 +27,7 @@ public class ScenarioAddedEventHandler implements HubEventHandler<ScenarioAddedE
     public void handle(ScenarioAddedEventAvro payload, String hubId, Instant timestamp) {
         Scenario scenarioEntity = new Scenario();
         scenarioEntity.setHubId(hubId);
-        scenarioEntity.setName(payload.getName().toString());
+        scenarioEntity.setName(payload.getName());
 
         log.info("Save ScenarioAddedEventAvro: {}", payload);
         log.info("hubId: {}", hubId);
@@ -51,7 +51,7 @@ public class ScenarioAddedEventHandler implements HubEventHandler<ScenarioAddedE
         List<ScenarioConditionLink> conditionLinks = payload.getConditions().stream()
                 .map(avroCondition -> {
 
-                    String sensorId = avroCondition.getSensorId().toString();
+                    String sensorId = avroCondition.getSensorId();
                     Sensor sensor = Sensor.builder()
                             .id(sensorId)
                             .hubId(hubId)
@@ -81,7 +81,7 @@ public class ScenarioAddedEventHandler implements HubEventHandler<ScenarioAddedE
 
         List<ScenarioActionLink> actionLinks = payload.getActions().stream()
                 .map(avroAction -> {
-                    String sensorId = avroAction.getSensorId().toString();
+                    String sensorId = avroAction.getSensorId();
                     Sensor sensor = Sensor.builder()
                             .id(sensorId)
                             .hubId(hubId)
