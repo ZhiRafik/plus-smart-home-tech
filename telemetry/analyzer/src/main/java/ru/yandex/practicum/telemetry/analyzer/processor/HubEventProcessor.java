@@ -38,6 +38,7 @@ public class HubEventProcessor implements Runnable {
 
             while (true) {
                 ConsumerRecords<String, SpecificRecordBase> records = consumer.poll(Duration.ofMillis(100));
+                log.info("Получено событий от хаба: {}", records.count());
 
                 for (ConsumerRecord<String, SpecificRecordBase> record : records) {
 
@@ -46,6 +47,7 @@ public class HubEventProcessor implements Runnable {
                         continue;
                     }
 
+                    log.info("Запущена обработка события: {}", event.getPayload());
                     hubEventService.processEvent(event);
                 }
                 consumer.commitAsync();

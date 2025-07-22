@@ -26,7 +26,7 @@ public class ScenarioServiceImpl implements ScenarioService {
 
     @Override
     public List<DeviceActionRequest> processSnapshot(SensorsSnapshotAvro snapshot) {
-        String hubId = snapshot.getHubId().toString();
+        String hubId = snapshot.getHubId();
         log.info("Обработка снапшота для хаба: {}", hubId);
 
         List<Scenario> scenarios = scenarioRepository.findByHubId(hubId);
@@ -40,13 +40,14 @@ public class ScenarioServiceImpl implements ScenarioService {
                     .allMatch(cond -> conditionMatch(cond, snapshot));
 
             if (allConditionsTrue) {
+                log.info("Активирован сценарий {}", scenario.getName());
                 List<ScenarioActionLink> actions = scenarioActionRepository.findAllByScenarioId((scenario.getId()));
 
                 for (ScenarioActionLink actionLink : actions) {
                     Action action = actionLink.getAction();
                     Sensor sensor = actionLink.getSensor();
                     DeviceActionRequest deviceActionRequest = DeviceActionRequest.newBuilder()
-                            .setHubId(snapshot.getHubId().toString())
+                            .setHubId(snapshot.getHubId())
                             .setAction(mapDeviceAction(sensor.getId(), action))
                             .setScenarioName(scenario.getName())
                             .setTimestamp(Timestamp.newBuilder()
@@ -55,6 +56,8 @@ public class ScenarioServiceImpl implements ScenarioService {
                                     .build()
                             )
                             .build();
+                    log.info("Должно будет быть выполнено действие типа: {}",
+                            deviceActionRequest.getAction().getType());
 
                     results.add(deviceActionRequest);
                 }
@@ -62,6 +65,7 @@ public class ScenarioServiceImpl implements ScenarioService {
                 log.info("Сценарий '{}' не активирован", scenario.getName());
             }
         }
+
         return results;
     }
 

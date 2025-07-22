@@ -40,6 +40,8 @@ public class SnapshotProcessor implements Runnable {
             consumer.subscribe(List.of(TOPIC));
             while (true) {
                 ConsumerRecords<String, SpecificRecordBase> records = consumer.poll(Duration.ofMillis(100));
+                log.info("Получено снапшотов: {}", records.count());
+
                 for (ConsumerRecord<String, SpecificRecordBase> record : records) {
                     if(!(record.value() instanceof SensorsSnapshotAvro sensorsSnapshotAvro)) {
                         log.warn("Неожиданный тип данных: {}", record.value().getClass().getSimpleName());
