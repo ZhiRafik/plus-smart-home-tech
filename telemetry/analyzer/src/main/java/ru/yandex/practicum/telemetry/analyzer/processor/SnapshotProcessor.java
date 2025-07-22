@@ -10,7 +10,7 @@ import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.grpc.telemetry.event.DeviceActionRequest;
+import ru.yandex.practicum.grpc.telemetry.event.DeviceActionRequestProto;
 import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
 import ru.yandex.practicum.telemetry.analyzer.grpc.GrpcCommandSender;
 import ru.yandex.practicum.telemetry.analyzer.service.ScenarioService;
@@ -47,8 +47,8 @@ public class SnapshotProcessor implements Runnable {
                         log.warn("Неожиданный тип данных: {}", record.value().getClass().getSimpleName());
                         continue;
                     }
-                    log.trace("Обрабатываю snapshot");
-                    List<DeviceActionRequest> actionRequests = scenarioService.processSnapshot(sensorsSnapshotAvro);
+                    log.info("Обрабатываю snapshot");
+                    List<DeviceActionRequestProto> actionRequests = scenarioService.processSnapshot(sensorsSnapshotAvro);
 
                     grpcSender.sendDeviceActions(actionRequests);
                     log.info("Анализатор отправил запросы: {} ", actionRequests);

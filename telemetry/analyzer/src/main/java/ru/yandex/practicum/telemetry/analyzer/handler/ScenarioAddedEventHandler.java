@@ -32,11 +32,6 @@ public class ScenarioAddedEventHandler implements HubEventHandler<ScenarioAddedE
         scenarioEntity.setHubId(hubId);
         scenarioEntity.setName(payload.getName());
 
-        log.info("Save ScenarioAddedEventAvro: {}", payload);
-        log.info("hubId: {}", hubId);
-        log.info("timestamp: {}", timestamp);
-
-
         List<Condition> conditionEntityList = payload.getConditions().stream()
                 .map(avroCondition -> Condition.builder()
                         .type(avroCondition.getType().toString())
@@ -45,7 +40,7 @@ public class ScenarioAddedEventHandler implements HubEventHandler<ScenarioAddedE
                             case Integer intValue -> intValue;
                             case Boolean boolValue -> boolValue ? 1 : 0;
                             default -> throw new IllegalArgumentException(
-                                    "Unsupported value type: " + avroCondition.getValue().getClass());
+                                    "Неподдерживаемый тип условий: " + avroCondition.getValue().getClass());
                         })
                         .operation(avroCondition.getOperation().toString())
                         .build())

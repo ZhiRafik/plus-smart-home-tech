@@ -5,7 +5,7 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.grpc.telemetry.event.DeviceActionRequest;
+import ru.yandex.practicum.grpc.telemetry.event.DeviceActionRequestProto;
 import ru.yandex.practicum.grpc.telemetry.hubrouter.HubRouterControllerGrpc.HubRouterControllerBlockingStub;
 
 import java.time.Instant;
@@ -17,13 +17,13 @@ public class GrpcCommandSender {
     @GrpcClient("hub-router")
     private HubRouterControllerBlockingStub hubRouterClient;
 
-    public void sendDeviceActions(List<DeviceActionRequest> actions) {
+    public void sendDeviceActions(List<DeviceActionRequestProto> actions) {
         if (actions.isEmpty()) {
             log.debug("Получен на обработку пусток список действий");
             return;
         }
 
-        for (DeviceActionRequest action : actions) {
+        for (DeviceActionRequestProto action : actions) {
             log.debug("Отправляю действие: {}", action);
             hubRouterClient.handleDeviceAction(action);
         }

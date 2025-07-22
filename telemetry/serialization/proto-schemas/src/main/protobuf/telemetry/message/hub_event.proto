@@ -24,7 +24,7 @@ message HubEventProto {
     }
 }
 
-message DeviceActionRequest {
+message DeviceActionRequestProto {
     string hub_id = 1;
     string scenario_name = 2;
     DeviceActionProto action = 3;

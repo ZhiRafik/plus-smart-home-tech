@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.grpc.telemetry.event.DeviceActionProto;
-import ru.yandex.practicum.grpc.telemetry.event.DeviceActionRequest;
+import ru.yandex.practicum.grpc.telemetry.event.DeviceActionRequestProto;
 import ru.yandex.practicum.kafka.telemetry.event.*;
 import ru.yandex.practicum.telemetry.analyzer.model.*;
 import ru.yandex.practicum.telemetry.analyzer.repository.*;
@@ -25,16 +25,17 @@ public class ScenarioServiceImpl implements ScenarioService {
     private final ScenarioActionLinkRepository scenarioActionRepository;
 
     @Override
-    public List<DeviceActionRequest> processSnapshot(SensorsSnapshotAvro snapshot) {
+    public List<DeviceActionRequestProto> processSnapshot(SensorsSnapshotAvro snapshot) {
         String hubId = snapshot.getHubId();
         log.info("Обработка снапшота для хаба: {}", hubId);
 
         List<Scenario> scenarios = scenarioRepository.findByHubId(hubId);
         log.debug("Найдено {} сценариев для хаба {}", scenarios.size(), hubId);
-        List<DeviceActionRequest> results = new ArrayList<>();
+        List<DeviceActionRequestProto> results = new ArrayList<>();
 
         for (Scenario scenario : scenarios) {
             List<ScenarioConditionLink> conditions = scenarioConditionRepository.findByScenarioId(scenario.getId());
+            log.info("Найдено условий для выполнения сценария: {}", conditions.size());
 
             boolean allConditionsTrue = conditions.stream()
                     .allMatch(cond -> conditionMatch(cond, snapshot));
@@ -46,7 +47,7 @@ public class ScenarioServiceImpl implements ScenarioService {
                 for (ScenarioActionLink actionLink : actions) {
                     Action action = actionLink.getAction();
                     Sensor sensor = actionLink.getSensor();
-                    DeviceActionRequest deviceActionRequest = DeviceActionRequest.newBuilder()
+                    DeviceActionRequestProto deviceActionRequest = DeviceActionRequestProto.newBuilder()
                             .setHubId(snapshot.getHubId())
                             .setAction(mapDeviceAction(sensor.getId(), action))
                             .setScenarioName(scenario.getName())
