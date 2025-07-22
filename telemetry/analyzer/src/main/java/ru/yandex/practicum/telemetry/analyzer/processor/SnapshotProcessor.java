@@ -68,4 +68,3 @@ public class SnapshotProcessor implements Runnable {
         consumer.wakeup();
     }
 }
-

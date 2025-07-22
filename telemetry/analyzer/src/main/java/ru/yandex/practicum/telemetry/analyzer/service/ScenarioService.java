@@ -6,6 +6,5 @@ import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
 import java.util.List;
 
 public interface ScenarioService {
-
     List<DeviceActionRequest> processSnapshot(SensorsSnapshotAvro snapshot);
 }
