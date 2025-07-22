@@ -34,6 +34,8 @@ public class HubEventProcessor implements Runnable {
 
         try {
             consumer.subscribe(List.of(TOPIC));
+            log.info("Подписка на Kafka-топик: {}", TOPIC);
+
             while (true) {
                 ConsumerRecords<String, SpecificRecordBase> records = consumer.poll(Duration.ofMillis(100));
 

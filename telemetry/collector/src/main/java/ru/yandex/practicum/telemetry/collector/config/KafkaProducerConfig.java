@@ -1,5 +1,6 @@
 package ru.yandex.practicum.telemetry.collector.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.apache.avro.specific.SpecificRecordBase;
@@ -14,7 +15,8 @@ import java.util.Properties;
 @Configuration
 public class KafkaProducerConfig {
 
-    private static final String BOOTSTRAP_SERVERS = "localhost:9092";
+    @Value("${spring.kafka.bootstrap-servers}")
+    private String BOOTSTRAP_SERVERS;
 
     @Bean
     public Producer<String, SpecificRecordBase> createProducer() {

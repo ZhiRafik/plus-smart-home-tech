@@ -25,6 +25,9 @@ public class ScenarioAddedEventHandler implements HubEventHandler<ScenarioAddedE
     @Transactional
     @Override
     public void handle(ScenarioAddedEventAvro payload, String hubId, Instant timestamp) {
+        log.info("Обработка ScenarioAddedEvent: name={}, hubId={}, timestamp={}", payload.getName(), hubId, timestamp);
+        log.debug("Payload: {}", payload);
+
         Scenario scenarioEntity = new Scenario();
         scenarioEntity.setHubId(hubId);
         scenarioEntity.setName(payload.getName());
@@ -100,20 +103,20 @@ public class ScenarioAddedEventHandler implements HubEventHandler<ScenarioAddedE
                 })
                 .toList();
 
-        log.info("Save entity: {}", scenarioEntity);
         scenarioRepository.save(scenarioEntity);
+        log.info("Сценарий сохранён: name={}, hubId={}", scenarioEntity.getName(), hubId);
 
-        log.info("Save conditionList: {}", conditionEntityList);
         conditionRepository.saveAll(conditionEntityList);
+        log.info("Условий сохранено: {}", conditionEntityList.size());
 
-        log.info("Save action: {}", actionEntityList);
         actionRepository.saveAll(actionEntityList);
+        log.info("Действий сохранено: {}", actionEntityList.size());
 
-        log.info("Save condition links: {}", conditionLinks);
         scenarioConditionLinkRepository.saveAll(conditionLinks);
+        log.info("Связей сценарий-условие сохранено: {}", conditionLinks.size());
 
-        log.info("Save action links: {}", actionLinks);
         scenarioActionLinkRepository.saveAll(actionLinks);
+        log.info("Связей сценарий-действие сохранено: {}", actionLinks.size());
 
     }
 

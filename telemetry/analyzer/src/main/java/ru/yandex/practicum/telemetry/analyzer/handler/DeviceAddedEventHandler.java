@@ -18,11 +18,13 @@ public class DeviceAddedEventHandler implements HubEventHandler<DeviceAddedEvent
 
     @Override
     public void handle(DeviceAddedEventAvro payload, String hubId, Instant timestamp) {
+        log.info("Добавление сенсора: id={}, hubId={}, timestamp={}", payload.getId(), hubId, timestamp);
         Sensor sensor = Sensor.builder()
                 .id(payload.getId())
                 .hubId(hubId)
                 .build();
         sensorRepository.save(sensor);
+        log.debug("Сенсор {} сохранён в базу", payload.getId());
     }
 
     @Override

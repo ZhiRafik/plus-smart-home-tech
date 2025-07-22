@@ -18,7 +18,6 @@ public class AggregatorApplication {
 
         // Получаем бин AggregationStarter из контекста и запускаем основную логику сервиса
         AggregationStarter aggregator = context.getBean(AggregationStarter.class);
-        Thread aggregatorThread = new Thread(aggregator::run, "aggregator-thread");
-        aggregatorThread.start();
+        aggregator.run();
     }
 }

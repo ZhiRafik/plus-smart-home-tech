@@ -7,6 +7,7 @@ import java.time.Instant;
 public interface HubEventHandler <T extends SpecificRecordBase> {
 
     Class<T> getMessageType();
+
     void handle(T payload, String hubId, Instant timestamp);
 }
 
