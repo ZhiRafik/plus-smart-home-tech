@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 @GrpcService
 @RequiredArgsConstructor
 public class EventController extends CollectorControllerGrpc.CollectorControllerImplBase {
+
     private final Set<SensorEventHandler> sensorEventHandlersInit;
     private final Set<HubEventHandler> hubEventHandlersInit;
     private Map<SensorEventProto.PayloadCase, SensorEventHandler> sensorEventHandlers;
@@ -65,7 +66,7 @@ public class EventController extends CollectorControllerGrpc.CollectorController
         }
     }
 
-    @PostMapping("/hubs")
+    @Override
     public void collectHubEvent(HubEventProto request, StreamObserver<Empty> responseObserver) {
         log.info("Получено событие от хаба: {}", request);
         try {

@@ -6,7 +6,6 @@ import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
 import ru.yandex.practicum.kafka.telemetry.event.SensorStateAvro;
 import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
 
-import java.time.Instant;
 import java.util.*;
 
 @Slf4j
@@ -18,45 +17,29 @@ public class AggregatorServiceImpl implements AggregatorService {
     @Override
     public Optional<SensorsSnapshotAvro> updateState(SensorEventAvro event) {
         String hubId = event.getHubId().toString();
-        CharSequence sensorId = event.getId();
-        long eventTimestamp = event.getTimestamp();
+        SensorsSnapshotAvro snapshot = snapshotByHub.computeIfAbsent(hubId, id -> {
+            SensorsSnapshotAvro newSnapshot = new SensorsSnapshotAvro();
+            newSnapshot.setHubId(hubId);
+            newSnapshot.setSensorsState(new HashMap<>());
+            return newSnapshot;
+        });
 
-        // 1. Получаем или создаём снапшот хаба
-        SensorsSnapshotAvro snapshot = snapshotByHub.get(hubId);
-        if (snapshot == null) {
-            snapshot = new SensorsSnapshotAvro();
-            snapshot.setHubId(hubId);
-            snapshot.setSensorsState(new HashMap<>());  // Инициализация
-            snapshotByHub.put(hubId, snapshot);
-        }
+        Map<String, SensorStateAvro> states = snapshot.getSensorsState();
+        SensorStateAvro oldState = states.get(event.getId());
 
-        // 2. Работаем напрямую с Map<CharSequence, SensorStateAvro>
-        Map<CharSequence, SensorStateAvro> states = snapshot.getSensorsState();
-        SensorStateAvro oldState = states.get(sensorId);
-
-        // 3. Если состояние уже есть — проверим, нужно ли обновлять
         if (oldState != null) {
-            long oldTs = oldState.getTimestamp().toEpochMilli();
-            if (oldTs >= eventTimestamp) {
-                log.info("Пропускаю событие от сенсора {}: устаревшее ({} <= {})", sensorId, eventTimestamp, oldTs);
-                return Optional.empty();
-            }
-            if (oldState.getData().equals(event.getPayload())) {
-                log.info("Пропускаю событие от сенсора {}: данные не изменились", sensorId);
+            if (oldState.getTimestamp().isAfter(event.getTimestamp()) ||
+                    oldState.getData().equals(event.getPayload())) {
                 return Optional.empty();
             }
         }
 
-        // 4. Создаём новое состояние сенсора
         SensorStateAvro newState = new SensorStateAvro();
-        newState.setTimestamp(Instant.ofEpochMilli(eventTimestamp));
+        newState.setTimestamp(event.getTimestamp());
         newState.setData(event.getPayload());
 
-        // 5. Обновляем Map прямо в snapshot
-        states.put(sensorId, newState);
-
-        // 6. Обновляем timestamp снапшота
-        snapshot.setTimestamp(Instant.ofEpochMilli(eventTimestamp));
+        states.put(event.getId(), newState);
+        snapshot.setTimestamp(event.getTimestamp());
 
         return Optional.of(snapshot);
     }

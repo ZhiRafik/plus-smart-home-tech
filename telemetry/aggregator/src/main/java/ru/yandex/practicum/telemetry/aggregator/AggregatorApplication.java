@@ -1,6 +1,5 @@
 package ru.yandex.practicum.telemetry.aggregator;
 
-
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
@@ -19,7 +18,6 @@ public class AggregatorApplication {
 
         // Получаем бин AggregationStarter из контекста и запускаем основную логику сервиса
         AggregationStarter aggregator = context.getBean(AggregationStarter.class);
-        Thread aggregatorThread = new Thread(aggregator::run, "aggregator-thread");
-        aggregatorThread.start();
+        aggregator.run();
     }
 }
