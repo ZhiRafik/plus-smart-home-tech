@@ -6,6 +6,12 @@ grpc:
 spring:
   kafka:
     bootstrap-servers: localhost:9092
+  application:
+    name: collector
 logging:
   level:
     root: DEBUG
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
