@@ -22,6 +22,7 @@ import java.util.UUID;
 @Table(name = "products")
 public class Product {
     @Id
+    @GeneratedValue
     UUID productId;
 
     @NotBlank

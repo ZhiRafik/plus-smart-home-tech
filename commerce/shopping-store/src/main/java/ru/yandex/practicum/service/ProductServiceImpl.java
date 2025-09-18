@@ -1,6 +1,6 @@
 package ru.yandex.practicum.service;
 
-import jakarta.ws.rs.NotFoundException;
+import ru.yandex.practicum.exception.ProductNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -28,7 +28,8 @@ public class ProductServiceImpl implements ProductService {
 
     public ProductDto updateProduct(Product pNew) {
         Product p = productRepository.findById(pNew.getProductId())
-                .orElseThrow(NotFoundException::new);
+                .orElseThrow(() -> new ProductNotFoundException(
+                        String.format("Product with ID %s not found", pNew.getProductId())));
         updateProduct(p, pNew);
         return ProductMapper.mapProductToDto(productRepository.save(p));
     }
@@ -51,9 +52,9 @@ public class ProductServiceImpl implements ProductService {
         Product foundProduct;
         try {
             foundProduct = productRepository.findById(productId)
-                    .orElseThrow(() -> new NotFoundException(
+                    .orElseThrow(() -> new ProductNotFoundException(
                             String.format("Product with ID %s not found", productId)));
-        } catch (NotFoundException ex) {
+        } catch (ProductNotFoundException ex) {
             log.error("Not found", ex);
             return false;
         }
@@ -64,7 +65,7 @@ public class ProductServiceImpl implements ProductService {
 
     public ProductDto getProductById(UUID productId) {
         Product foundProduct = productRepository.findById(productId)
-                    .orElseThrow(() -> new NotFoundException(
+                    .orElseThrow(() -> new ProductNotFoundException(
                             String.format("Product with ID %s not found", productId)));
         return ProductMapper.mapProductToDto(foundProduct);
     }

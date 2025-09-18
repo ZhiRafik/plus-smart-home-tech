@@ -1,0 +1,40 @@
+package ru.yandex.practicum.model;
+
+import jakarta.persistence.*;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+
+import java.io.Serializable;
+import java.util.UUID;
+
+@Data
+@Entity
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
+@Table(name = "cart_products")
+public class ProductCartLink {
+
+    @EmbeddedId
+    ProductCartLinkId id;
+
+    @ManyToOne
+    @MapsId("cartId")
+    @JoinColumn(name = "cart_id")
+    ShoppingCart cart;
+
+    Long quantity;
+
+    @Data
+    @Embeddable
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @EqualsAndHashCode
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class ProductCartLinkId implements Serializable {
+        UUID cartId;
+
+        UUID productId;
+    }
+}
