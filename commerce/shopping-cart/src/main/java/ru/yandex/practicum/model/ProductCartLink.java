@@ -27,6 +27,7 @@ public class ProductCartLink {
     Long quantity;
 
     @Data
+    @Builder
     @Embeddable
     @NoArgsConstructor
     @AllArgsConstructor

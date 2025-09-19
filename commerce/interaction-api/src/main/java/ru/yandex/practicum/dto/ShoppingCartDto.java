@@ -12,7 +12,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ShoppingCartDto {
-    UUID shoppingCartId;
+    UUID cartId;
 
     Map<UUID, Long> products;
 }
