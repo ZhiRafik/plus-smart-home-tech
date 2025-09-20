@@ -106,7 +106,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>ru.yandex.practicum.telemetry.collector.CollectorApplication</mainClass>
+                    <mainClass>ru.yandex.practicum.ShoppingStoreApplication</mainClass>
                 </configuration>
             </plugin>
         </plugins>
