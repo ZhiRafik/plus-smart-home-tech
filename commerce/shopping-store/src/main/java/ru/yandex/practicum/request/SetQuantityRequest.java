@@ -1,4 +1,4 @@
-package ru.yandex.practicum.model;
+package ru.yandex.practicum.request;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;

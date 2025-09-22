@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.dto.ProductDto;
 import ru.yandex.practicum.enums.ProductCategory;
 import ru.yandex.practicum.model.Product;
-import ru.yandex.practicum.model.SetQuantityRequest;
+import ru.yandex.practicum.request.SetQuantityRequest;
 import ru.yandex.practicum.service.ProductService;
 
 import java.util.UUID;

@@ -1,4 +1,4 @@
-package ru.yandex.practicum.model;
+package ru.yandex.practicum.request;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Positive;
@@ -19,6 +19,7 @@ public class NewProductInWarehouseRequest {
     Boolean fragile;
 
     DimensionDto dimension;
+
     @Positive @DecimalMin(value = "1.0", inclusive = true)
     Double weight;
 }
