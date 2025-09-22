@@ -15,7 +15,12 @@ import java.util.UUID;
 @Table(name = "warehouses_items")
 public class WarehouseItem {
     @Id
+    @GeneratedValue
+    @Column(name = "id", columnDefinition = "uuid")
     UUID id;
+
+    @Column(name = "product_id", nullable = false, columnDefinition = "uuid")
+    UUID productId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "warehouse_id", nullable = false, columnDefinition = "uuid")
@@ -26,6 +31,7 @@ public class WarehouseItem {
 
     Boolean fragile;
 
+    @Column(nullable = false)
     Long quantity;
 
     Double weight;

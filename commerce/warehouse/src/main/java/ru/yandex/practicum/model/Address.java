@@ -16,4 +16,14 @@ public class Address {
     String street;
     String house;
     String flat;
+
+    public static Address of(String token) {
+        return Address.builder()
+                .country(token)
+                .city(token)
+                .street(token)
+                .house(token)
+                .flat(token)
+                .build();
+    }
 }
