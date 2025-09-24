@@ -8,7 +8,7 @@ import ru.yandex.practicum.model.ProductCartLink;
 import java.util.UUID;
 
 public interface ProductCartLinkRepository extends JpaRepository<ProductCartLink, ProductCartLink.ProductCartLinkId> {
-    int deleteByCartIdAndProductId(UUID cartId, UUID productId);
+    int deleteById_CartIdAndId_ProductId(UUID cartId, UUID productId);
 
     @Query("UPDATE ProductCartLink l " +
             "SET l.quantity = :quantity " +

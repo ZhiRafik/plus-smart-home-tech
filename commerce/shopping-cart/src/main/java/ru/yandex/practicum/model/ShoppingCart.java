@@ -17,7 +17,7 @@ import java.util.UUID;
 public class ShoppingCart {
     @Id
     @GeneratedValue
-    UUID cartId;
+    UUID id;
 
     @ElementCollection
     @CollectionTable(

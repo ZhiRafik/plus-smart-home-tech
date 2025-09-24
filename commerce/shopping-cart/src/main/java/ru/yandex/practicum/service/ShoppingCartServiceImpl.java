@@ -54,7 +54,7 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
 
         // нужно сразу проверить наличие каждого товара на складе и в противном случае ничего не добавлять
         warehouseClient.checkProductAvailability(ShoppingCartDto.builder()
-                        .cartId(foundCart.getCartId())
+                        .cartId(foundCart.getId())
                         .products(products)
                         .build());
         // пока ничего не делаю с возвращаемым BookedProductsDto,
@@ -67,7 +67,7 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
                     .cart(foundCart)
                     .id(ProductCartLink.ProductCartLinkId.builder()
                             .productId(productId)
-                            .cartId(foundCart.getCartId())
+                            .cartId(foundCart.getId())
                             .build())
                     .quantity(quantity)
                     .build());
@@ -93,10 +93,10 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
     public ShoppingCartDto removeProducts(String username, List<UUID> products) {
         UUID cartId = cartRepository.findByUsername(username)
                 .orElseThrow(() -> new NoProductsInShoppingCartException(NO_PRODUCTS_IN_CART))
-                .getCartId();
+                .getId();
 
         for (UUID productId : products) {
-            if (productCartLinkRepository.deleteByCartIdAndProductId(cartId, productId) < 1) {
+            if (productCartLinkRepository.deleteById_CartIdAndId_ProductId(cartId, productId) < 1) {
                 throw new NoSuchProductInShoppingCartException(
                         String.format(NO_SUCH_PRODUCT_IN_CART, productId));
             }
@@ -110,7 +110,7 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
                                                  Map<UUID, Long> productsQuantity) {
         UUID cartId = cartRepository.findByUsername(username)
                 .orElseThrow(() -> new NoProductsInShoppingCartException(NO_PRODUCTS_IN_CART))
-                .getCartId();
+                .getId();
 
         for (Map.Entry<UUID, Long> entry : productsQuantity.entrySet()) {
             if (productCartLinkRepository.updateQuantity(cartId, entry.getKey(), entry.getValue()) < 1) {

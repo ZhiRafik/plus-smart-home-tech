@@ -8,11 +8,11 @@ import java.io.Serializable;
 import java.util.UUID;
 
 @Data
-@Entity
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Entity
 @Table(name = "cart_products")
 public class ProductCartLink {
 
@@ -34,8 +34,10 @@ public class ProductCartLink {
     @EqualsAndHashCode
     @FieldDefaults(level = AccessLevel.PRIVATE)
     public static class ProductCartLinkId implements Serializable {
+        @Column(name = "cart_id", nullable = false)
         UUID cartId;
 
+        @Column(name = "product_id", nullable = false)
         UUID productId;
     }
 }

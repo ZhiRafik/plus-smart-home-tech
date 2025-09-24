@@ -6,7 +6,7 @@ logging:
 spring:
   datasource:
     driverClassName: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/shopping-store
+    url: jdbc:postgresql://localhost:5432/shopping_store
     username: postgres
     password: postgres
 eureka:

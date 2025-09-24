@@ -10,6 +10,13 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface WarehouseRepository extends JpaRepository<Warehouse, UUID> {
-    @Query("SELECT w FROM warehouses w WHERE w.address = :address")
+    @Query("""
+       SELECT w FROM Warehouse w
+       WHERE w.address.country = :#{#address.country}
+         AND w.address.city = :#{#address.city}
+         AND w.address.street = :#{#address.street}
+         AND w.address.house = :#{#address.house}
+         AND w.address.flat = :#{#address.flat}
+       """)
     Optional<Warehouse> findByAddress(@Param("address") Address address);
 }
