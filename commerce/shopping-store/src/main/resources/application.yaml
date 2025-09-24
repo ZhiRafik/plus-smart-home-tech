@@ -2,7 +2,7 @@ spring:
   application:
     name: shopping-store
   config:
-    import: "config-server:"
+    import: "configserver:"
     cloud:
       config:
         discovery:
