@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public interface CartService {
+public interface ShoppingCartService {
 
     ShoppingCartDto addProduct(String username, Map<UUID, Long> products);
 

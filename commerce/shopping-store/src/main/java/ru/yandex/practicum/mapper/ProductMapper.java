@@ -4,7 +4,7 @@ import ru.yandex.practicum.dto.ProductDto;
 import ru.yandex.practicum.model.Product;
 
 public class ProductMapper {
-    public static ProductDto mapProductToDto(Product product) {
+    public static ProductDto mapToDto(Product product) {
         return ProductDto.builder()
                 .productName(product.getProductName())
                 .productCategory(product.getProductCategory())
@@ -17,7 +17,7 @@ public class ProductMapper {
                 .build();
     }
 
-    public static Product mapDtoToProduct(ProductDto dto) {
+    public static Product mapToProduct(ProductDto dto) {
         return Product.builder()
                 .productName(dto.getProductName())
                 .productCategory(dto.getProductCategory())

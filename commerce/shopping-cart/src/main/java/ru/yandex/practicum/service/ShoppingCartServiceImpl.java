@@ -1,11 +1,11 @@
 package ru.yandex.practicum.service;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.client.WarehouseClient;
 import ru.yandex.practicum.dto.ShoppingCartDto;
 import ru.yandex.practicum.exception.NoProductsInShoppingCartException;
 import ru.yandex.practicum.exception.NoSuchProductInShoppingCartException;
@@ -23,7 +23,8 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class CartServiceImpl implements CartService {
+public class ShoppingCartServiceImpl implements ShoppingCartService {
+    private final WarehouseClient warehouseClient;
     private final CartRepository cartRepository;
     private final ProductCartLinkRepository productCartLinkRepository;
     private final static String NO_PRODUCTS_IN_CART = "No products in cart yet";
@@ -35,38 +36,44 @@ public class CartServiceImpl implements CartService {
         // 3. По найденной корзине по имени пользователя добавляем товар и его количество в связную таблицу
         // 4. Проверить наличие на складе
         Optional<ShoppingCart> cart = cartRepository.findByUsername(username);
+        ShoppingCart foundCart;
 
         if (cart.isEmpty()) {
-            return ShoppingCartMapper.mapCartToDto(
-                    ShoppingCart.builder()
+            foundCart = ShoppingCart.builder()
                     .isActive(true)
                     .username(username)
                     .products(products)
-                    .build()
-            );
+                    .build();
         } else { // иначе корзина уже есть, можно только добавить связки продукт-корзина в БД cart_products
             // сначала вернём текущие товары, чтобы добавить их к новым и вернуть DTO
-            ShoppingCart foundCart = cart.get();
-
-            for (Map.Entry<UUID, Long> entry : products.entrySet()) {
-                UUID productId = entry.getKey();
-                Long quantity = entry.getValue();
-                productCartLinkRepository.save(ProductCartLink.builder()
-                        .cart(foundCart)
-                        .id(ProductCartLink.ProductCartLinkId.builder()
-                                .productId(productId)
-                                .cartId(foundCart.getCartId())
-                                .build())
-                        .quantity(quantity)
-                        .build());
-            }
-
+            foundCart = cart.get();
             Map<UUID, Long> unitedProducts = foundCart.getProducts();
             unitedProducts.putAll(products);
             foundCart.setProducts(unitedProducts);
-
-            return ShoppingCartMapper.mapCartToDto(foundCart);
         }
+
+        // нужно сразу проверить наличие каждого товара на складе и в противном случае ничего не добавлять
+        warehouseClient.checkProductAvailability(ShoppingCartDto.builder()
+                        .cartId(foundCart.getCartId())
+                        .products(products)
+                        .build());
+        // пока ничего не делаю с возвращаемым BookedProductsDto,
+        // но в случае нехватки выкинется ProductInShoppingCartLowQuantityInWarehouseException
+
+        for (Map.Entry<UUID, Long> entry : products.entrySet()) {
+            UUID productId = entry.getKey();
+            Long quantity = entry.getValue();
+            productCartLinkRepository.save(ProductCartLink.builder()
+                    .cart(foundCart)
+                    .id(ProductCartLink.ProductCartLinkId.builder()
+                            .productId(productId)
+                            .cartId(foundCart.getCartId())
+                            .build())
+                    .quantity(quantity)
+                    .build());
+        }
+
+        return ShoppingCartMapper.mapCartToDto(foundCart);
     }
 
     public ShoppingCartDto getCart(String username) { // валидация имени пользователя в контроллере

@@ -10,9 +10,9 @@ import ru.yandex.practicum.model.Product;
 import java.util.UUID;
 
 public interface ProductService {
-    ProductDto addProduct(Product product);
+    ProductDto addProduct(ProductDto product);
 
-    ProductDto updateProduct(Product product);
+    ProductDto updateProduct(ProductDto product);
 
     Page<ProductDto> getProduct(ProductCategory category, Pageable pageable);
 

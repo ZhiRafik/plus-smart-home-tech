@@ -9,24 +9,24 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.dto.ProductDto;
 import ru.yandex.practicum.enums.ProductCategory;
-import ru.yandex.practicum.model.Product;
 import ru.yandex.practicum.request.SetQuantityRequest;
 import ru.yandex.practicum.service.ProductService;
 
 import java.util.UUID;
 
-@RestController("/api/v1/shopping-store")
+@RestController
+@RequestMapping("/api/v1/shopping-store")
 @RequiredArgsConstructor
-public class ProductController {
+public class ShoppingStoreController {
     private final ProductService productService;
 
     @PutMapping
-    public ProductDto addProduct(@Valid @RequestBody Product product) {
+    public ProductDto addProduct(@Valid @RequestBody ProductDto product) {
         return productService.addProduct(product);
     }
 
     @PostMapping
-    public ProductDto updateProduct(@RequestBody Product product) {
+    public ProductDto updateProduct(@RequestBody ProductDto product) {
         return productService.updateProduct(product);
     }
 

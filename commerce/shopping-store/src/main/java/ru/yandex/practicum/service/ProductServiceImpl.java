@@ -22,21 +22,21 @@ import java.util.UUID;
 public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
 
-    public ProductDto addProduct(Product product) {
-        return ProductMapper.mapProductToDto(productRepository.save(product));
+    public ProductDto addProduct(ProductDto product) {
+        return ProductMapper.mapToDto(productRepository.save(ProductMapper.mapToProduct(product)));
     }
 
-    public ProductDto updateProduct(Product pNew) {
+    public ProductDto updateProduct(ProductDto pNew) {
         Product p = productRepository.findById(pNew.getProductId())
                 .orElseThrow(() -> new ProductNotFoundException(
                         String.format("Product with ID %s not found", pNew.getProductId())));
-        updateProduct(p, pNew);
-        return ProductMapper.mapProductToDto(productRepository.save(p));
+        updateProduct(p, ProductMapper.mapToProduct(pNew));
+        return ProductMapper.mapToDto(productRepository.save(p));
     }
 
     public Page<ProductDto> getProduct(ProductCategory category, Pageable pageable) {
         return productRepository.findByProductCategory(category, pageable)
-                .map(ProductMapper::mapProductToDto);
+                .map(ProductMapper::mapToDto);
     }
 
     public boolean removeProduct(UUID productId) {
@@ -67,7 +67,7 @@ public class ProductServiceImpl implements ProductService {
         Product foundProduct = productRepository.findById(productId)
                     .orElseThrow(() -> new ProductNotFoundException(
                             String.format("Product with ID %s not found", productId)));
-        return ProductMapper.mapProductToDto(foundProduct);
+        return ProductMapper.mapToDto(foundProduct);
     }
 
     private void updateProduct(Product pOld, Product pNew) {

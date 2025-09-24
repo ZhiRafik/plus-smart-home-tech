@@ -5,16 +5,17 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.dto.ShoppingCartDto;
-import ru.yandex.practicum.service.CartService;
+import ru.yandex.practicum.service.ShoppingCartService;
 
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-@RestController("/api/v1/shopping-cart")
+@RestController
+@RequestMapping("/api/v1/shopping-cart")
 @RequiredArgsConstructor
-public class CartController {
-    CartService cartService;
+public class ShoppingCartController {
+    ShoppingCartService cartService;
     private final static String BLANK_NAME = "Имя пользователя не должно быть пустым";
     // нужно, чтобы возвращалось 401
 
