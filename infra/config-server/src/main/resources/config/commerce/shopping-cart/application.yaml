@@ -1,0 +1,23 @@
+server:
+  port: 0
+logging:
+  level:
+    root: DEBUG
+spring:
+  datasource:
+    driverClassName: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/shopping-cart
+    username: postgres
+    password: postgres
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+resilience4j.circuitbreaker:
+  configs:
+    default:
+      slidingWindowSize: 50
+      failureRateThreshold: 50
+      waitDurationInOpenState: 10000
+      permittedNumberOfCallsInHalfOpenState: 5000
+      slidingWindowType: COUNT_BASED

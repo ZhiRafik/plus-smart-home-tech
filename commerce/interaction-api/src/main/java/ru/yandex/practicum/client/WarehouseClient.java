@@ -8,7 +8,7 @@ import ru.yandex.practicum.dto.AddressDto;
 import ru.yandex.practicum.dto.BookedProductsDto;
 import ru.yandex.practicum.dto.ShoppingCartDto;
 
-@FeignClient(name = "warehouse", path = "/api/v1/warehouse")
+@FeignClient(name = "warehouse", path = "/api/v1/warehouse", fallback = MyFeignClientFallback.class)
 public interface WarehouseClient {
 
     @PostMapping("/check")
