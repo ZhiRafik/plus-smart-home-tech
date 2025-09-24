@@ -6,8 +6,6 @@ grpc:
 spring:
   kafka:
     bootstrap-servers: localhost:9092
-  application:
-    name: collector
 logging:
   level:
     root: DEBUG
