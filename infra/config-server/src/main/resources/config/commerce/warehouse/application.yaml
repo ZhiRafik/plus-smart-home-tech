@@ -9,6 +9,9 @@ spring:
     url: jdbc:postgresql://localhost:5432/warehouse
     username: postgres
     password: postgres
+  sql:
+    init:
+      mode: always
 eureka:
   client:
     serviceUrl:
