@@ -1,6 +1,8 @@
 package ru.yandex.practicum.controller;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,13 +17,13 @@ import java.util.UUID;
 @RequestMapping("/api/v1/shopping-cart")
 @RequiredArgsConstructor
 public class ShoppingCartController {
-    ShoppingCartService cartService;
+    private final ShoppingCartService cartService;
     private final static String BLANK_NAME = "Имя пользователя не должно быть пустым";
     // нужно, чтобы возвращалось 401
 
     @PutMapping
     public ShoppingCartDto addProduct(@RequestParam @NotBlank(message = BLANK_NAME) String username,
-                                      @RequestBody Map<UUID, Long> products) {
+                                      @RequestBody @NotEmpty Map<UUID, @Positive Long> products) {
         return cartService.addProduct(username, products);
     }
 

@@ -16,18 +16,11 @@ import java.util.UUID;
 @Table(name = "carts")
 public class ShoppingCart {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "cart_id")
     UUID id;
 
-    @ElementCollection
-    @CollectionTable(
-            name = "cart_products",
-            joinColumns = @JoinColumn(name = "cart_id"))
-    @MapKeyColumn(name = "product_id")  // ключ карты = UUID товара
-    @Column(name = "quantity", nullable = false) // значение карты = количество
-    Map<UUID, Long> products;
-
-
+    @Column(name = "is_active")
     Boolean isActive;
 
     @Column(name = "username", nullable = false, unique = true)

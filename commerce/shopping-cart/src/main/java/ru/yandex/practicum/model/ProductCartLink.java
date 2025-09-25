@@ -21,7 +21,11 @@ public class ProductCartLink {
 
     @ManyToOne
     @MapsId("cartId")
-    @JoinColumn(name = "cart_id")
+    @JoinColumn(name = "cart_id",                 // имя колонки FK в cart_products
+            referencedColumnName = "cart_id",      // имя PK-колонки в carts
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_cart")
+    )
     ShoppingCart cart;
 
     Long quantity;
