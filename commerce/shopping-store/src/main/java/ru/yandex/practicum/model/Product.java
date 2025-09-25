@@ -15,7 +15,6 @@ import java.util.UUID;
 
 @Data
 @Builder
-@EntityScan
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)

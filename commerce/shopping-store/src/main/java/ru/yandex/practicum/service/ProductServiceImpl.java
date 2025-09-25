@@ -1,5 +1,7 @@
 package ru.yandex.practicum.service;
 
+import jakarta.transaction.Transactional;
+import ru.yandex.practicum.enums.ProductState;
 import ru.yandex.practicum.exception.ProductNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,13 +41,13 @@ public class ProductServiceImpl implements ProductService {
                 .map(ProductMapper::mapToDto);
     }
 
+    @Transactional
     public boolean removeProduct(UUID productId) {
-        try {
-            productRepository.deleteById(productId);
+        return productRepository.findById(productId).map(product -> {
+            product.setProductState(ProductState.DEACTIVATE);
+            productRepository.save(product);
             return true;
-        } catch (EmptyResultDataAccessException ex) {
-            return false;
-        }
+        }).orElse(false);
     }
 
     public boolean setProductState(UUID productId, QuantityState quantityState) {
