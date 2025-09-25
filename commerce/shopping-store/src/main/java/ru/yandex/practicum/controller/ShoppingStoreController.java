@@ -9,7 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.dto.ProductDto;
 import ru.yandex.practicum.enums.ProductCategory;
-import ru.yandex.practicum.request.SetQuantityRequest;
+import ru.yandex.practicum.enums.QuantityState;
 import ru.yandex.practicum.service.ProductService;
 
 import java.util.UUID;
@@ -44,8 +44,9 @@ public class ShoppingStoreController {
     }
 
     @PostMapping("/quantityState") // warehouse
-    public ResponseEntity<Boolean> setProductState(@RequestBody SetQuantityRequest request) {
-        boolean changed = productService.setProductState(request.getProductId(), request.getQuantityState());
+    public ResponseEntity<Boolean> setProductState(@RequestParam UUID productId,
+                                                   @RequestParam QuantityState quantityState) {
+        boolean changed = productService.setProductState(productId, quantityState);
         return changed
                 ? ResponseEntity.ok(true)
                 : ResponseEntity.status(HttpStatus.NOT_FOUND).body(false);
