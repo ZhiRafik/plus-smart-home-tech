@@ -17,6 +17,7 @@ import ru.yandex.practicum.repository.ProductCartLinkRepository;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -154,13 +155,37 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
                 .orElseThrow(() -> new NoProductsInShoppingCartException(NO_PRODUCTS_IN_CART))
                 .getId();
 
-        for (Map.Entry<UUID, Long> entry : productsQuantity.entrySet()) {
-            if (productCartLinkRepository.updateQuantity(cartId, entry.getKey(), entry.getValue()) < 1) {
-                throw new NoSuchProductInShoppingCartException(
-                        String.format(NO_SUCH_PRODUCT_IN_CART, entry.getKey(), cartId));
+        for (Map.Entry<UUID, Long> e : productsQuantity.entrySet()) {
+            UUID productId = e.getKey();
+            Long newQty = e.getValue();
+
+            // если запись есть — обновляем/удаляем
+            Optional<ProductCartLink> linkOpt = productCartLinkRepository.findById_CartIdAndId_ProductId(cartId, productId);
+            if (linkOpt.isPresent()) {
+                if (newQty == null || newQty <= 0) {
+                    productCartLinkRepository.deleteById_CartIdAndId_ProductId(cartId, productId);
+                } else {
+                    ProductCartLink link = linkOpt.get();
+                    link.setQuantity(newQty);
+                    productCartLinkRepository.saveAndFlush(link);
+                }
+                continue;
             }
+
+            // если записи нет — upsert (создаём только при newQty>0)
+            if (newQty != null && newQty > 0) {
+                ProductCartLink created = ProductCartLink.builder()
+                        .cart(ShoppingCart.builder().id(cartId).build())
+                        .id(ProductCartLink.ProductCartLinkId.builder()
+                                .cartId(cartId)
+                                .productId(productId)
+                                .build())
+                        .quantity(newQty)
+                        .build();
+                productCartLinkRepository.saveAndFlush(created);
+            } // иначе (<=0) — ничего не делаем, и точно не кидаем 400
         }
-        // выше уже проверили, что корзина существует
+
         return buildDto(cartId);
     }
 
