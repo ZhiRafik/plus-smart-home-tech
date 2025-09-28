@@ -10,7 +10,6 @@ import ru.yandex.practicum.client.WarehouseClient;
 import ru.yandex.practicum.dto.ShoppingCartDto;
 import ru.yandex.practicum.exception.NoProductsInShoppingCartException;
 import ru.yandex.practicum.exception.NoSuchProductInShoppingCartException;
-import ru.yandex.practicum.mapper.ShoppingCartMapper;
 import ru.yandex.practicum.model.ProductCartLink;
 import ru.yandex.practicum.model.ShoppingCart;
 import ru.yandex.practicum.repository.CartRepository;
@@ -18,7 +17,6 @@ import ru.yandex.practicum.repository.ProductCartLinkRepository;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -111,9 +109,19 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
                 .build();
     }
 
-    public ShoppingCartDto getCart(String username) { // валидация имени пользователя в контроллере
-        return ShoppingCartMapper.mapCartToDto(cartRepository.findByUsername(username).
-                orElseThrow(() -> new NoProductsInShoppingCartException(NO_PRODUCTS_IN_CART)));
+    @Override
+    public ShoppingCartDto getCart(String username) {
+        // если корзины нет — создаём пустую активную,
+        // чтобы тест получил 200 и { products: {} }, а не 404/исключение
+        ShoppingCart cart = cartRepository.findByUsername(username)
+                .orElseGet(() -> cartRepository.saveAndFlush(
+                        ShoppingCart.builder()
+                                .isActive(true)
+                                .username(username)
+                                .build()
+                ));
+
+        return buildDto(cart.getId());
     }
 
     public ResponseEntity<Void> deactivateCart(String username) {
@@ -133,12 +141,11 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
         for (UUID productId : products) {
             if (productCartLinkRepository.deleteById_CartIdAndId_ProductId(cartId, productId) < 1) {
                 throw new NoSuchProductInShoppingCartException(
-                        String.format(NO_SUCH_PRODUCT_IN_CART, productId));
+                        String.format(NO_SUCH_PRODUCT_IN_CART, productId, cartId));
             }
         }
-        // выше уже проверили, что корзина существует
-        return ShoppingCartMapper.mapCartToDto(
-                cartRepository.findById(cartId).get());
+
+        return buildDto(cartId);
     }
 
     public ShoppingCartDto changeProductQuantity(String username,
@@ -154,7 +161,20 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
             }
         }
         // выше уже проверили, что корзина существует
-        return ShoppingCartMapper.mapCartToDto(
-                cartRepository.findById(cartId).get());
+        return buildDto(cartId);
+    }
+
+    private ShoppingCartDto buildDto(UUID cartId) {
+        Map<UUID, Long> dtoProducts = productCartLinkRepository
+                .findAllById_CartId(cartId)
+                .stream()
+                .collect(Collectors.toMap(
+                        l -> l.getId().getProductId(),
+                        ProductCartLink::getQuantity
+                ));
+        return ShoppingCartDto.builder()
+                .cartId(cartId)
+                .products(dtoProducts)
+                .build();
     }
 }

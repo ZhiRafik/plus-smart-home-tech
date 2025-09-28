@@ -8,6 +8,7 @@ public class ShoppingCartMapper {
     public static ShoppingCartDto mapCartToDto(ShoppingCart cart) {
         return ShoppingCartDto.builder()
                 .cartId(cart.getId())
+                .products(cart.getProducts())
                 .build();
     }
 /* пока метод не нужен
