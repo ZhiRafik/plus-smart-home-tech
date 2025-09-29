@@ -151,8 +151,12 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
     @Transactional
     public ShoppingCartDto changeProductQuantity(String username, Map<Long, UUID> productsQuantity) {
         UUID cartId = cartRepository.findByUsername(username)
-                .orElseThrow(() -> new NoProductsInShoppingCartException(NO_PRODUCTS_IN_CART))
-                .getId();
+                .orElseGet(() -> cartRepository.saveAndFlush( // если корзины нет, то по ТЗ её нужно создать
+                        ShoppingCart.builder()               // и добавить желаемые товары
+                                .isActive(true)
+                                .username(username)
+                                .build()
+                )).getId();
 
         for (Map.Entry<Long, UUID> e : productsQuantity.entrySet()) {
             UUID productId = e.getValue();

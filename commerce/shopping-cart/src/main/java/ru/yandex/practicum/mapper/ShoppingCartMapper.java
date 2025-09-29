@@ -11,14 +11,4 @@ public class ShoppingCartMapper {
                 .products(cart.getProducts())
                 .build();
     }
-/* пока метод не нужен
-    public static ShoppingCart mapDtoToCart(ShoppingCartDto dto) {
-        return ShoppingCart.builder()
-                .cartId(dto.getCartId())
-                .isActive(найти в базе)
-                .username(найти в базе)
-                .products(dto.getProducts())
-                .build();
-    }
- */
 }
