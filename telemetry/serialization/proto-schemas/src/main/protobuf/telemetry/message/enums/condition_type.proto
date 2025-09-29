@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package telemetry.message.enums;
+
+option java_multiple_files = true;
+option java_package = "ru.yandex.practicum.grpc.telemetry.event.enums";
+
+// события создания/удаления сценариев
+enum ConditionTypeProto {
+  MOTION = 0;
+  LUMINOSITY = 1;
+  SWITCH = 2;
+  TEMPERATURE = 3;
+  CO2LEVEL = 4;
+  HUMIDITY = 5;
+}
