@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.dto.ShoppingCartDto;
+import ru.yandex.practicum.request.ChangeProductQuantityRequest;
 import ru.yandex.practicum.service.ShoppingCartService;
 
 import java.util.List;
@@ -45,7 +46,8 @@ public class ShoppingCartController {
 
     @PostMapping("/change-quantity")
     public ShoppingCartDto changeProductQuantity(@RequestParam @NotBlank(message = BLANK_NAME) String username,
-                                                 @RequestBody Map<Long, UUID> productsQuantity) {
+                                                 @RequestBody ChangeProductQuantityRequest request) {
+        Map<Long, UUID> productsQuantity = Map.of(request.getNewQuantity(), request.getProductId());;
         return cartService.changeProductQuantity(username, productsQuantity);
     }
 }

@@ -15,10 +15,7 @@ import ru.yandex.practicum.model.ShoppingCart;
 import ru.yandex.practicum.repository.CartRepository;
 import ru.yandex.practicum.repository.ProductCartLinkRepository;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -162,7 +159,8 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
             Long newQty = e.getKey();
 
             // если запись есть — обновляем/удаляем
-            Optional<ProductCartLink> linkOpt = productCartLinkRepository.findById_CartIdAndId_ProductId(cartId, productId);
+            Optional<ProductCartLink> linkOpt = productCartLinkRepository
+                    .findById_CartIdAndId_ProductId(cartId, productId);
             if (linkOpt.isPresent()) {
                 if (newQty == null || newQty <= 0) {
                     productCartLinkRepository.deleteById_CartIdAndId_ProductId(cartId, productId);

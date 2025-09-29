@@ -13,5 +13,5 @@ import java.util.UUID;
 public class ChangeProductQuantityRequest {
     UUID productId;
 
-    Integer newQuantity;
+    Long newQuantity;
 }
