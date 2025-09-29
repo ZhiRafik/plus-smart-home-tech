@@ -12,7 +12,12 @@ import java.util.UUID;
 public interface CartRepository extends JpaRepository<ShoppingCart, UUID> {
     Optional<ShoppingCart> findByUsername(String username);
 
-    @Modifying
-    @Query("UPDATE ShoppingCart c SET c.isActive = NOT c.isActive WHERE c.username = :username")
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+           UPDATE ShoppingCart c
+              SET c.isActive = false
+            WHERE c.username = :username
+              AND c.isActive = true
+           """)
     int deactivate(@Param("username") String username);
 }

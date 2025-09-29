@@ -45,7 +45,7 @@ public class ShoppingCartController {
 
     @PostMapping("/change-quantity")
     public ShoppingCartDto changeProductQuantity(@RequestParam @NotBlank(message = BLANK_NAME) String username,
-                                                 @RequestBody Map<UUID, Long> productsQuantity) {
+                                                 @RequestBody Map<Long, UUID> productsQuantity) {
         return cartService.changeProductQuantity(username, productsQuantity);
     }
 }

@@ -125,6 +125,7 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
         return buildDto(cart.getId());
     }
 
+    @Transactional
     public ResponseEntity<Void> deactivateCart(String username) {
         int changed = cartRepository.deactivate(username);
         if (changed > 0) {
@@ -134,6 +135,7 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
         }
     }
 
+    @Transactional
     public ShoppingCartDto removeProducts(String username, List<UUID> products) {
         UUID cartId = cartRepository.findByUsername(username)
                 .orElseThrow(() -> new NoProductsInShoppingCartException(NO_PRODUCTS_IN_CART))
@@ -149,15 +151,15 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
         return buildDto(cartId);
     }
 
-    public ShoppingCartDto changeProductQuantity(String username,
-                                                 Map<UUID, Long> productsQuantity) {
+    @Transactional
+    public ShoppingCartDto changeProductQuantity(String username, Map<Long, UUID> productsQuantity) {
         UUID cartId = cartRepository.findByUsername(username)
                 .orElseThrow(() -> new NoProductsInShoppingCartException(NO_PRODUCTS_IN_CART))
                 .getId();
 
-        for (Map.Entry<UUID, Long> e : productsQuantity.entrySet()) {
-            UUID productId = e.getKey();
-            Long newQty = e.getValue();
+        for (Map.Entry<Long, UUID> e : productsQuantity.entrySet()) {
+            UUID productId = e.getValue();
+            Long newQty = e.getKey();
 
             // если запись есть — обновляем/удаляем
             Optional<ProductCartLink> linkOpt = productCartLinkRepository.findById_CartIdAndId_ProductId(cartId, productId);
