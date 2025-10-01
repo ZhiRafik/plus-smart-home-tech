@@ -30,3 +30,8 @@ eureka:
   client:
     serviceUrl:
       defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    # Spring Cloud сам подставит реальный порт, если не переопределять руками,
+    # но на некоторых сетевых конфигурациях лучше зафиксировать instance-id:
+    instance-id: ${spring.application.name}:${spring.cloud.client.ip-address}:${server.port}:${random.value}
