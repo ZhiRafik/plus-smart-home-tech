@@ -12,7 +12,9 @@ import lombok.experimental.FieldDefaults;
 public class BookedProductsDto {
     @Positive
     Double deliveryWeight;
+
     @Positive
     Double deliveryVolume;
+
     Boolean fragile;
 }

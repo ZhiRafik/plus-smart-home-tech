@@ -30,17 +30,17 @@ CREATE TABLE IF NOT EXISTS orders (
     shopping_cart_id UUID,
     payment_id UUID,
     delivery_id UUID,
-    delivery_weight DOUBLE PRECISION,
-    delivery_volume DOUBLE PRECISION,
-    fragile BOOLEAN DEFAULT FALSE,
+    delivery_weight DOUBLE PRECISION DEFAULT 0,
+    delivery_volume DOUBLE PRECISION DEFAULT 0,
+    fragile BOOLEAN DEFAULT true,
     address_country VARCHAR(255),
     address_city VARCHAR(255),
     address_street VARCHAR(255),
     address_house VARCHAR(255),
     address_flat VARCHAR(255),
-    total_price NUMERIC(14,2),
-    delivery_price NUMERIC(14,2),
-    product_price NUMERIC(14,2),
+    total_price NUMERIC(14,2) DEFAULT 0,
+    delivery_price NUMERIC(14,2) DEFAULT 0,
+    product_price NUMERIC(14,2) DEFAULT 0,
     state order_state NOT NULL DEFAULT 'NEW',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
@@ -58,26 +58,7 @@ CREATE TABLE IF NOT EXISTS order_items (
     CONSTRAINT uq_order_item UNIQUE (order_id, product_id)
 );
 
--- 4) Таблица возвратов
-CREATE TABLE IF NOT EXISTS product_returns (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    order_id UUID NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-
-    CONSTRAINT fk_return_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
-);
-
--- 5) Таблица товаров в возвратах
-CREATE TABLE IF NOT EXISTS product_return_items (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    return_id UUID NOT NULL,
-    product_id UUID NOT NULL,
-    quantity BIGINT NOT NULL CHECK (quantity > 0),
-
-    CONSTRAINT fk_return FOREIGN KEY (return_id) REFERENCES product_returns(id) ON DELETE CASCADE
-);
-
--- 6) Триггер для автоматического обновления updated_at - не входит в API, но реализую на будущее из любопытства
+-- 4) Триггер для автоматического обновления updated_at - не входит в API, но реализую на будущее из любопытства
 CREATE OR REPLACE FUNCTION trg_set_timestamp() RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = now();
