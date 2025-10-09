@@ -8,7 +8,10 @@ public final class OrderMapper {
     private OrderMapper() {}
 
     public static OrderDto toDto(Order order) {
-        if (order == null) return null;
+        if (order == null) {
+            return null;
+        }
+
         return OrderDto.builder()
                 .orderId(order.getOrderId())
                 .shoppingCartId(order.getShoppingCartId())

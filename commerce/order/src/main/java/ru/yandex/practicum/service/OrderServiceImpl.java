@@ -4,10 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.client.WarehouseClient;
-import ru.yandex.practicum.dto.BookedProductsDto;
-import ru.yandex.practicum.dto.OrderDto;
-import ru.yandex.practicum.dto.ProductDto;
-import ru.yandex.practicum.dto.ShoppingCartDto;
+import ru.yandex.practicum.dto.*;
+import ru.yandex.practicum.enums.DeliveryState;
 import ru.yandex.practicum.enums.OrderState;
 import ru.yandex.practicum.exception.InvalidOrderStateException;
 import ru.yandex.practicum.exception.NoOrderFoundException;
@@ -53,37 +51,34 @@ public class OrderServiceImpl implements OrderService {
         ShoppingCartDto cart = request.getShoppingCart();
         BookedProductsDto booked = warehouseClient.checkProductAvailability(cart);
 
-        DeliveryCreateResponse delivery = deliveryClient.create(
-                DeliveryCreateRequest.builder()
-                        .toAddress(request.getDeliveryAddress())
-                        .weight(booked.getDeliveryWeight())
-                        .volume(booked.getDeliveryVolume())
-                        .fragile(Boolean.TRUE.equals(booked.getFragile()))
-                        .build()
-        );
+        // Генерируем orderId ЗАРАНЕЕ (он понадобится для планирования доставки и платежа)
+        UUID orderId = UUID.randomUUID();
 
-        UUID deliveryId = delivery.getDeliveryId();
-        Double deliveryPrice = delivery.getPrice();
-
-        PaymentCreateRequest paymentRequest = PaymentCreateRequest.builder()
-                .items(cart.getProducts())
-                .deliveryCost(deliveryPrice)
-                .vatPercent(10.0)
+        AddressDto warehouseAddress = warehouseClient.getWarehouseAddressForDelivery();
+        DeliveryDto deliveryDto = DeliveryDto.builder()
+                .deliveryState(DeliveryState.CREATED)
+                .fromAddress(warehouseAddress)
+                .toAddress(request.getDeliveryAddress())
+                .orderId(orderId)
                 .build();
 
-        PaymentCreateResponse paymentCreated = paymentClient.create(paymentRequest);
-        UUID paymentId = paymentCreated.getPaymentId();
+        DeliveryDto delivery = deliveryClient.planDelivery(deliveryDto);
+        UUID deliveryId = delivery.getDeliveryId();
 
         Order order = Order.builder()
+                .orderId(orderId)
                 .state(OrderState.NEW)
                 .username(username)
                 .shoppingCartId(cart.getCartId())
                 .deliveryAddress(request.getDeliveryAddress())
                 .products(cart.getProducts())
-                .paymentId(paymentId)
                 .deliveryId(deliveryId)
-                .deliveryPrice(deliveryPrice)
                 .build();
+
+        PaymentDto paymentCreated = paymentClient.createPayment(OrderMapper.toDto(order));
+        UUID paymentId = paymentCreated.getPaymentId();
+
+        order.setPaymentId(paymentId);
 
         Order saved = orderRepository.save(order);
         return OrderMapper.toDto(saved);
@@ -135,21 +130,6 @@ public class OrderServiceImpl implements OrderService {
         order.setState(OrderState.PAYMENT_FAILED);
         orderRepository.save(order);
 
-        // компенсации (best-effort)
-        try {
-            if (order.getDeliveryId() != null) {
-                deliveryClient.cancel(order.getDeliveryId());
-            }
-        } catch (Exception e) {
-            log.warn("Failed to cancel delivery for order {}", orderId, e);
-        }
-
-        try {
-            warehouseClient.returnToStock(orderId);
-        } catch (Exception e) {
-            log.warn("Failed to return stock for order {}", orderId, e);
-        }
-
         return OrderMapper.toDto(order);
     }
 
@@ -163,9 +143,6 @@ public class OrderServiceImpl implements OrderService {
             return OrderMapper.toDto(order);
         }
 
-        if (!EnumSet.of(OrderState.ASSEMBLED).contains(order.getState())) {
-            throw new InvalidOrderStateException("Cannot move to ON_DELIVERY from state %s".formatted(order.getState()));
-        }
         if (order.getDeliveryId() == null) {
             throw new InvalidOrderStateException("Cannot start delivery: deliveryId is null");
         }
@@ -184,18 +161,8 @@ public class OrderServiceImpl implements OrderService {
             return OrderMapper.toDto(order);
         }
 
-        if (!EnumSet.of(OrderState.ASSEMBLED, OrderState.ON_DELIVERY).contains(order.getState())) {
-            throw new InvalidOrderStateException("Cannot mark delivery failed from state %s".formatted(order.getState()));
-        }
-
         order.setState(OrderState.DELIVERY_FAILED);
         orderRepository.save(order);
-
-        try {
-            warehouseClient.returnToStock(orderId);
-        } catch (Exception e) {
-            log.warn("Failed to return stock for order {}", orderId, e);
-        }
 
         return OrderMapper.toDto(order);
     }
@@ -207,10 +174,6 @@ public class OrderServiceImpl implements OrderService {
 
         if (EnumSet.of(OrderState.COMPLETED).contains(order.getState())) {
             return OrderMapper.toDto(order);
-        }
-
-        if (order.getState() != OrderState.DELIVERED) {
-            throw new InvalidOrderStateException("Cannot complete order from state %s".formatted(order.getState()));
         }
 
         order.setState(OrderState.COMPLETED);
@@ -237,6 +200,7 @@ public class OrderServiceImpl implements OrderService {
 
         double deliveryPrice = order.getDeliveryPrice() != null ? order.getDeliveryPrice() : 0.0;
         order.setTotalPrice(productsTotal + deliveryPrice);
+        order.setDeliveryPrice(deliveryPrice);
 
         orderRepository.save(order);
         return OrderMapper.toDto(order);
@@ -249,19 +213,25 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NoOrderFoundException("No order with %s was found".formatted(orderId)));
 
-        // Ничего не пересчитываем: цена доставки уже задана при создании заказа.
-        // Гарантируем ненулевое значение в ответе.
+        double deliveryPrice = deliveryClient.calculateCost(OrderMapper.toDto(order));
         if (order.getDeliveryPrice() == null) {
             order.setDeliveryPrice(0.0);
-            orderRepository.save(order);
         }
+
+        order.setDeliveryPrice(deliveryPrice);
+        orderRepository.save(order);
 
         return OrderMapper.toDto(order);
     }
 
 
+
+
+
+
+    //!!!!!!!!!!!!!!!!!!!!! должен вызываться извне - из Warehouse наверное
     @Override
-    public OrderDto assembly(UUID orderId) {
+    public OrderDto assembly(UUID orderId) { // наверное только если assembled, можно вызывать delivery в Delivery?
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NoOrderFoundException("No order with %s was found".formatted(orderId)));
 
@@ -286,8 +256,7 @@ public class OrderServiceImpl implements OrderService {
         return OrderMapper.toDto(order);
     }
 
-
-
+    //!!!!!!!!!!!!!!!!!!!!! должен вызываться извне - из Warehouse наверное
     @Override
     public OrderDto assemblyFailed(UUID orderId) {
         Order order = orderRepository.findById(orderId)
@@ -301,17 +270,17 @@ public class OrderServiceImpl implements OrderService {
             throw new InvalidOrderStateException("Cannot mark assembly failed from state %s".formatted(order.getState()));
         }
 
-        try {
-            warehouseClient.returnToStock(orderId); // вернуть на склад, т.к. сборка не состоялась
-        } catch (Exception e) {
-            log.warn("Failed to return stock for order {}", orderId, e);
-        }
-
         order.setState(OrderState.ASSEMBLY_FAILED);
         orderRepository.save(order);
 
         return OrderMapper.toDto(order);
     }
+
+
+
+
+
+
 
 
     @Override

@@ -1,5 +1,6 @@
 package ru.yandex.practicum.dto;
 
+import jakarta.validation.constraints.Positive;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import ru.yandex.practicum.enums.OrderState;
@@ -26,15 +27,20 @@ public class OrderDto {
 
     OrderState state;
 
+    @Positive
     Double deliveryWeight;
 
+    @Positive
     Double deliveryVolume;
 
     Boolean fragile;
 
+    @Positive
     Double totalPrice;
 
+    @Positive
     Double deliveryPrice;
 
+    @Positive
     Double productPrice;
 }

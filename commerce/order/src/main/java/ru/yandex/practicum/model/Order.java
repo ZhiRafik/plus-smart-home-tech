@@ -20,7 +20,7 @@ import java.util.UUID;
 public class Order {
 
     @Id
-    @GeneratedValue
+    @Column(name = "id", nullable = false)
     UUID orderId;
 
     String username;
