@@ -13,6 +13,7 @@ import ru.yandex.practicum.exception.NoDeliveryFoundException;
 import ru.yandex.practicum.mapper.DeliveryMapper;
 import ru.yandex.practicum.model.Delivery;
 import ru.yandex.practicum.repository.DeliveryRepository;
+import ru.yandex.practicum.request.ShippedToDeliveryRequest;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -70,6 +71,10 @@ public class DeliveryServiceImpl implements DeliveryService {
 
         // обновляем заказ
         orderClient.delivery(orderId);
+        // отправляем информацию о доставке на склад
+        warehouseClient.shipToDelivery(
+                new ShippedToDeliveryRequest(orderId, delivery.getDeliveryId())
+        );
 
         // связываем с системой склада
         warehouseClient.bindDelivery(orderId, delivery.getDeliveryId());
