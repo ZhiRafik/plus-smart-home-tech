@@ -1,27 +1,23 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+DROP TYPE IF EXISTS order_state CASCADE;
 
--- 1) Тип ENUM для статусов заказов
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'order_state') THEN
-        CREATE TYPE order_state AS ENUM (
-            'NEW',
-            'ON_PAYMENT',
-            'ON_DELIVERY',
-            'DONE',
-            'DELIVERED',
-            'ASSEMBLED',
-            'PAID',
-            'COMPLETED',
-            'DELIVERY_FAILED',
-            'ASSEMBLY_FAILED',
-            'PAYMENT_FAILED',
-            'PRODUCT_RETURNED',
-            'CANCELED'
-        );
-    END IF;
-END
-$$;
+-- Тип ENUM для статусов заказов
+CREATE TYPE order_state AS ENUM (
+    'NEW',
+    'ON_PAYMENT',
+    'ON_DELIVERY',
+    'DONE',
+    'DELIVERED',
+    'ASSEMBLED',
+    'PAID',
+    'COMPLETED',
+    'DELIVERY_FAILED',
+    'ASSEMBLY_FAILED',
+    'PAYMENT_FAILED',
+    'PRODUCT_RETURNED',
+    'CANCELED'
+);
+
 
 -- 2) Таблица заказов
 CREATE TABLE IF NOT EXISTS orders (

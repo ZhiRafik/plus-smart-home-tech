@@ -1,3 +1,4 @@
+/*
 package ru.yandex.practicum.model;
 
 import jakarta.persistence.Entity;
@@ -31,3 +32,4 @@ public class OrderItemLink {
 
     BigDecimal unitPrice;
 }
+*/

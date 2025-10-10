@@ -1,17 +1,13 @@
--- Тип статуса оплаты
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'payment_status') THEN
-        CREATE TYPE payment_status AS ENUM (
-            'PENDING',
-            'SUCCESS',
-            'FAILED'
-        );
-    END IF;
-END
-$$;
+DROP TYPE IF EXISTS payment_status CASCADE;
 
-CREATE TABLE payments (
+-- Тип ENUM для статусов оплаты
+CREATE TYPE payment_status AS ENUM (
+    'PENDING',
+    'SUCCESS',
+    'FAILED'
+);
+
+CREATE TABLE IF NOT EXISTS payment (
     id UUID PRIMARY KEY, -- идентификатор платежа (paymentId), генерируем в Java-коде
     order_id UUID NOT NULL,
     status payment_status NOT NULL, -- текущий статус оплаты

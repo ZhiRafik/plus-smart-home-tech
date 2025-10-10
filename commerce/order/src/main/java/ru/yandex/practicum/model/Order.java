@@ -52,5 +52,13 @@ public class Order {
 
     Double productPrice;
 
+    @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "country", column = @Column(name = "to_country")),
+            @AttributeOverride(name = "city",    column = @Column(name = "to_city")),
+            @AttributeOverride(name = "street",  column = @Column(name = "to_street")),
+            @AttributeOverride(name = "house",   column = @Column(name = "to_house")),
+            @AttributeOverride(name = "flat",    column = @Column(name = "to_flat"))
+    })
     AddressDto deliveryAddress;
 }

@@ -44,7 +44,7 @@ public class Delivery {
     UUID orderId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "status", nullable = false)
     DeliveryState deliveryState; 
 
     Double totalWeight;

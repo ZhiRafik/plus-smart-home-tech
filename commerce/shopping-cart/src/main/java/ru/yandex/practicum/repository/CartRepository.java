@@ -13,8 +13,6 @@ public interface CartRepository extends JpaRepository<ShoppingCart, UUID> {
 
     Optional<ShoppingCart> findByUsername(String username);
 
-    Optional<ShoppingCart> findByCartId(UUID cartId);
-
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
            UPDATE ShoppingCart c

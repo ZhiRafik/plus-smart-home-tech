@@ -1,22 +1,18 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+DROP TYPE IF EXISTS delivery_state CASCADE;
 
 -- Тип статуса доставки
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'delivery_status') THEN
-        CREATE TYPE delivery_status AS ENUM (
-            'CREATED',
-            'IN_PROGRESS',
-            'DELIVERED',
-            'FAILED',
-            'CANCELLED'
-        );
-    END IF;
-END
-$$;
+CREATE TYPE delivery_state AS ENUM (
+    'CREATED',
+    'IN_PROGRESS',
+    'DELIVERED',
+    'FAILED',
+    'CANCELLED'
+);
+
 
 -- Таблица доставок
-CREATE TABLE deliveries (
+CREATE TABLE IF NOT EXISTS delivery (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),       -- идентификатор доставки (deliveryId)
     order_id UUID NOT NULL UNIQUE,                        -- ссылка на заказ (одна доставка на заказ)
 
@@ -36,15 +32,5 @@ CREATE TABLE deliveries (
     total_volume DOUBLE PRECISION NOT NULL DEFAULT 0,     -- общий объём (м^3)
     fragile      BOOLEAN NOT NULL DEFAULT FALSE,          -- признак хрупкости
 
-    status delivery_status NOT NULL                       -- текущий статус доставки
+    status delivery_state NOT NULL                       -- текущий статус доставки
 );
-
--- Полезные индексы (необязательно, но ускоряют выборки по статусу/улицам)
-CREATE INDEX IF NOT EXISTS idx_deliveries_order_id ON deliveries(order_id);
-CREATE INDEX IF NOT EXISTS idx_deliveries_status ON deliveries(status);
-CREATE INDEX IF NOT EXISTS idx_deliveries_from_street ON deliveries(from_street);
-CREATE INDEX IF NOT EXISTS idx_deliveries_to_street ON deliveries(to_street);
-
-ALTER TABLE deliveries
-  ADD CONSTRAINT chk_weight_non_negative CHECK (total_weight >= 0),
-  ADD CONSTRAINT chk_volume_non_negative CHECK (total_volume >= 0);

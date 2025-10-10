@@ -13,7 +13,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "payments")
+@Table(name = "payment")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Payment {
 

@@ -198,7 +198,7 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
 
     @Override
     public String findUsernameByCartId(UUID cartId) {
-        ShoppingCart cart = cartRepository.findByCartId(cartId)
+        ShoppingCart cart = cartRepository.findById(cartId)
                 .orElseThrow(() -> new ShoppingCartNotFoundException(
                         "Shopping cart with id %s not found".formatted(cartId))
                 );
