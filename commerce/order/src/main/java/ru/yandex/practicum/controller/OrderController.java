@@ -30,6 +30,11 @@ public class OrderController {
         return orderService.getOrders(username);
     }
 
+    @GetMapping("/{orderId}")
+    public OrderDto getOrderById(@PathVariable UUID orderId) {
+        return orderService.getOrderById(orderId);
+    }
+
     @PutMapping
     public OrderDto createNewOrder(@RequestBody @Valid CreateNewOrderRequest request) {
         return orderService.createNewOrder(request);

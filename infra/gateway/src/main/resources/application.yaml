@@ -10,6 +10,51 @@ spring:
           serviceId: config-server
           retry:
             useRandomPolicy: true
+  cloud:
+    gateway:
+      routes:
+        - id: shopping_cart_route
+          uri: lb://shopping-cart
+
+          predicates:
+            - Path=/shopping-cart/**
+          filters:
+            - PrefixPath=/api/v1
+
+        - id: shopping_store_route
+          uri: lb://shopping-store
+          predicates:
+            - Path=/shopping-store/**
+          filters:
+            - PrefixPath=/api/v1
+
+        - id: warehouse_route
+          uri: lb://warehouse
+          predicates:
+            - Path=/warehouse/**
+          filters:
+            - PrefixPath=/api/v1
+
+        - id: order-route
+          uri: lb://order
+          predicates:
+            - Path=/order/**
+          filters:
+            - PrefixPath=/api/v1
+
+        - id: payment-route
+          uri: lb://payment
+          predicates:
+            - Path=/payment/**
+          filters:
+            - PrefixPath=/api/v1
+
+        - id: delivery-route
+          uri: lb://delivery
+          predicates:
+            - Path=/delivery/**
+          filters:
+            - PrefixPath=/api/v1
 eureka:
   client:
     serviceUrl:

@@ -10,7 +10,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface CartRepository extends JpaRepository<ShoppingCart, UUID> {
+
     Optional<ShoppingCart> findByUsername(String username);
+
+    Optional<ShoppingCart> findByCartId(UUID cartId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""

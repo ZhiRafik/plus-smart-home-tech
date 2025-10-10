@@ -15,5 +15,5 @@ public class ProductReturnRequest {
 
     UUID orderId;
 
-    HashMap<UUID, Integer> products; // productId -> quantity;
+    HashMap<UUID, Long> products; // productId -> quantity;
 }

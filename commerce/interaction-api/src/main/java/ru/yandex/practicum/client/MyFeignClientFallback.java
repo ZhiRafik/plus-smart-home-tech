@@ -2,6 +2,7 @@ package ru.yandex.practicum.client;
 
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -39,6 +40,11 @@ public class MyFeignClientFallback implements WarehouseClient, PaymentClient,
 
     @PostMapping("/assembly")
     public BookedProductsDto assemblyProductsInOrder(@RequestBody AssemblyProductsForOrderRequest request) {
+        throw new RuntimeException("Сервис Warehouse временно не доступен");
+    }
+
+    @PostMapping("/return")
+    public ResponseEntity<Void> returnProducts(@RequestBody Map<UUID, Long> products) {
         throw new RuntimeException("Сервис Warehouse временно не доступен");
     }
 
@@ -85,6 +91,11 @@ public class MyFeignClientFallback implements WarehouseClient, PaymentClient,
     @PostMapping("/change-quantity")
     public ShoppingCartDto changeProductQuantity(@RequestParam String username,
                                                  @RequestBody Map<UUID, Long> productsQuantity) {
+        throw new RuntimeException("Сервис ShoppingCart временно не доступен");
+    }
+
+    @GetMapping("/{cartId}/username")
+    public String findUsernameByCartId(@PathVariable @NotNull UUID cartId) {
         throw new RuntimeException("Сервис ShoppingCart временно не доступен");
     }
 

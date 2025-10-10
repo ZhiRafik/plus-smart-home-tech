@@ -11,6 +11,8 @@ public interface OrderService {
 
     List<OrderDto> getOrders(String username);
 
+    OrderDto getOrderById(UUID orderId);
+
     OrderDto createNewOrder(CreateNewOrderRequest request);
 
     OrderDto payment(UUID orderId);

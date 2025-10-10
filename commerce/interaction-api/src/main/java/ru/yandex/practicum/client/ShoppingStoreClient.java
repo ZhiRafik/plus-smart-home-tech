@@ -12,7 +12,7 @@ import ru.yandex.practicum.request.SetQuantityRequest;
 import java.util.UUID;
 
 @FeignClient(name = "shopping-store", path = "/api/v1/shopping-store")
-interface ShoppingStoreClient {
+public interface ShoppingStoreClient {
 
     @PutMapping
     ProductDto addProduct(@RequestBody ProductDto product);

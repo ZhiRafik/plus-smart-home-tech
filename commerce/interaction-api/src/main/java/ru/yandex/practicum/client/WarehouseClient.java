@@ -11,6 +11,9 @@ import ru.yandex.practicum.dto.ShoppingCartDto;
 import ru.yandex.practicum.request.AssemblyProductsForOrderRequest;
 import ru.yandex.practicum.request.ShippedToDeliveryRequest;
 
+import java.util.Map;
+import java.util.UUID;
+
 @FeignClient(name = "warehouse", path = "/api/v1/warehouse", fallback = MyFeignClientFallback.class)
 public interface WarehouseClient {
 
@@ -25,4 +28,7 @@ public interface WarehouseClient {
 
     @PostMapping("/assembly")
     BookedProductsDto assemblyProductsInOrder(@RequestBody AssemblyProductsForOrderRequest request);
+
+    @PostMapping("/return")
+    ResponseEntity<Void> returnProducts(@RequestBody Map<UUID, Long> products);
 }

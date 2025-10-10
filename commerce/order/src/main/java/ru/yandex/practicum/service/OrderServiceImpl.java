@@ -3,10 +3,14 @@ package ru.yandex.practicum.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.client.DeliveryClient;
+import ru.yandex.practicum.client.PaymentClient;
+import ru.yandex.practicum.client.ShoppingCartClient;
 import ru.yandex.practicum.client.WarehouseClient;
 import ru.yandex.practicum.dto.*;
 import ru.yandex.practicum.enums.DeliveryState;
 import ru.yandex.practicum.enums.OrderState;
+import ru.yandex.practicum.exception.AssemblyFailedException;
 import ru.yandex.practicum.exception.InvalidOrderStateException;
 import ru.yandex.practicum.exception.NoOrderFoundException;
 import ru.yandex.practicum.exception.NotAuthorizedUserException;
@@ -21,10 +25,12 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
+
     private final OrderRepository orderRepository;
     private final WarehouseClient warehouseClient;
     private final PaymentClient paymentClient;
     private final DeliveryClient deliveryClient;
+    private final ShoppingCartClient shoppingCartClient;
 
     @Override
     public List<OrderDto> getOrders(String username) {
@@ -40,12 +46,15 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderDto createNewOrder(CreateNewOrderRequest request) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String username = Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
-                .map(Authentication::getName)
-                .orElseThrow(() -> new NotAuthorizedUserException("User is not authenticated"));
+    public OrderDto getOrderById(UUID orderId) {
+        return OrderMapper.toDto(
+                    orderRepository.findById(orderId)
+                    .orElseThrow(() -> new NoOrderFoundException("Order with id %s not found".formatted(orderId))
+                    ));
+    }
 
+    @Override
+    public OrderDto createNewOrder(CreateNewOrderRequest request) {
         // Генерируем orderId ЗАРАНЕЕ (он понадобится для планирования доставки и платежа)
         UUID orderId = UUID.randomUUID();
 
@@ -68,6 +77,15 @@ public class OrderServiceImpl implements OrderService {
         DeliveryDto delivery = deliveryClient.planDelivery(deliveryDto);
         UUID deliveryId = delivery.getDeliveryId();
 
+        UUID cartId = request.getShoppingCart().getCartId();
+        String username = shoppingCartClient.findUsernameByCartId(cartId);
+        if (username.isBlank()) {
+            throw new NotAuthorizedUserException(
+                    "Username for shopping cart with cart_id %s not found"
+                            .formatted(cartId)
+            );
+        }
+
         Order order = Order.builder()
                 .orderId(orderId)
                 .state(OrderState.NEW)
@@ -78,7 +96,7 @@ public class OrderServiceImpl implements OrderService {
                 .deliveryId(deliveryId)
                 .build();
 
-        PaymentDto paymentCreated = paymentClient.createPayment(OrderMapper.toDto(order));
+        PaymentDto paymentCreated = paymentClient.createPayment(OrderMapper.toDto(order)).getBody();
         UUID paymentId = paymentCreated.getPaymentId();
 
         order.setPaymentId(paymentId);
@@ -194,7 +212,7 @@ public class OrderServiceImpl implements OrderService {
             orderRepository.save(order);
         }
 
-        double totalPrice = paymentClient.calculateTotalCost(OrderMapper.toDto(order));
+        Double totalPrice = paymentClient.calculateTotalCost(OrderMapper.toDto(order)).getBody();
         order.setTotalPrice(totalPrice);
 
         orderRepository.save(order);
@@ -238,6 +256,7 @@ public class OrderServiceImpl implements OrderService {
             ); // вычитаем остатки и помечаем как собранные на складе
         } catch (RuntimeException e) {
             assemblyFailed(orderId);
+            throw new AssemblyFailedException("Cannot assemble the order with id %s".formatted(orderId));
         }
         order.setState(OrderState.ASSEMBLED);
         orderRepository.save(order);
@@ -281,7 +300,7 @@ public class OrderServiceImpl implements OrderService {
         }
 
         try {
-            warehouseClient.returnProducts(request);
+            warehouseClient.returnProducts(request.getProducts());
         } catch (Exception e) {
             log.warn("Failed to return products for order {}", orderId, e);
         }
