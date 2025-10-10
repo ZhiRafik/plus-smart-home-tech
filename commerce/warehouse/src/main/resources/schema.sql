@@ -23,3 +23,19 @@ CREATE TABLE IF NOT EXISTS warehouses_items (
 
     CONSTRAINT fk_warehouse FOREIGN KEY (warehouse_id) REFERENCES warehouses(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS assembled_orders (
+    order_id UUID PRIMARY KEY,
+    delivery_id UUID
+);
+
+CREATE TABLE IF NOT EXISTS assembled_orders_items (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    order_id UUID NOT NULL,
+    delivery_id UUID,
+    product_id UUID NOT NULL,
+    quantity BIGINT NOT NULL,
+
+    CONSTRAINT fk_assembled_order_item_order
+            FOREIGN KEY (order_id) REFERENCES assembled_orders(order_id) ON DELETE CASCADE
+);

@@ -3,6 +3,7 @@ package ru.yandex.practicum.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import ru.yandex.practicum.model.WarehouseItem;
 
 import java.util.List;
@@ -21,4 +22,21 @@ public interface WarehousesItemsRepository extends JpaRepository<WarehouseItem, 
             " AND wi.productId = :productId")
     int incrementQuantityByWarehouseIdAndProductId(UUID warehouseId, UUID productId, Integer delta);
 
+    @Modifying
+    @Query("""
+        UPDATE WarehouseItem wi SET wi.quantity = :newQuantity
+         WHERE wi.warehouse.id = :warehouseId
+           AND wi.productId = :productId
+    """)
+    void setQuantity(@Param("warehouseId") UUID warehouseId,
+                    @Param("productId") UUID productId,
+                    @Param("newQuantity") Long newQuantity);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+    UPDATE WarehouseItem wi
+       SET wi.quantity = wi.quantity + :qty
+     WHERE wi.warehouse.id = :warehouseId AND wi.productId = :productId
+    """)
+    int incrementQuantity(UUID warehouseId, UUID productId, Long qty);
 }

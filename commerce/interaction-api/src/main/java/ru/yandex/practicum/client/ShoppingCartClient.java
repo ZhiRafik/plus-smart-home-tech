@@ -25,5 +25,8 @@ public interface ShoppingCartClient {
     ShoppingCartDto removeProducts(@RequestParam String username, @RequestBody List<UUID> products);
 
     @PostMapping("/change-quantity")
-    ShoppingCartDto changeProductQuantity(@RequestParam String username, @RequestBody Map<UUID, Long> productsQuantity);
+    ShoppingCartDto changeProductQuantity(@RequestParam String username,
+                                          @RequestBody Map<UUID, Long> productsQuantity);
+    @GetMapping("/{cartId}/username")
+    String findUsernameByCartId(UUID cartId);
 }
