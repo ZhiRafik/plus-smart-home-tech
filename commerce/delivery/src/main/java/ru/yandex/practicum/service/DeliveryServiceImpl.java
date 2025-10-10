@@ -24,7 +24,6 @@ import java.util.UUID;
 public class DeliveryServiceImpl implements DeliveryService {
 
     private static final double BASE_COST = 5.0;
-
     private final DeliveryRepository deliveryRepository;
     private final OrderClient orderClient;
     private final WarehouseClient warehouseClient;
@@ -75,9 +74,6 @@ public class DeliveryServiceImpl implements DeliveryService {
         warehouseClient.shipToDelivery(
                 new ShippedToDeliveryRequest(orderId, delivery.getDeliveryId())
         );
-
-        // связываем с системой склада
-        warehouseClient.bindDelivery(orderId, delivery.getDeliveryId());
     }
 
     @Override

@@ -37,7 +37,7 @@ public class DeliveryController {
     }
 
     @PostMapping("/cost")
-    public double deliveryCost(@RequestBody @Valid OrderDto order) {
+    public Double deliveryCost(@RequestBody @Valid OrderDto order) {
         return service.calculateCost(order);
     }
 }

@@ -25,7 +25,6 @@ public class OrderServiceImpl implements OrderService {
     private final WarehouseClient warehouseClient;
     private final PaymentClient paymentClient;
     private final DeliveryClient deliveryClient;
-    private final ShoppingClient shoppingClient;
 
     @Override
     public List<OrderDto> getOrders(String username) {
@@ -47,12 +46,16 @@ public class OrderServiceImpl implements OrderService {
                 .map(Authentication::getName)
                 .orElseThrow(() -> new NotAuthorizedUserException("User is not authenticated"));
 
-
-        ShoppingCartDto cart = request.getShoppingCart();
-        BookedProductsDto booked = warehouseClient.checkProductAvailability(cart);
-
         // Генерируем orderId ЗАРАНЕЕ (он понадобится для планирования доставки и платежа)
         UUID orderId = UUID.randomUUID();
+
+        ShoppingCartDto cart = request.getShoppingCart();
+        BookedProductsDto booked = warehouseClient.assemblyProductsInOrder(
+                AssemblyProductsForOrderRequest.builder()
+                        .orderId(orderId)
+                        .products(cart.getProducts())
+                        .build()
+        );
 
         AddressDto warehouseAddress = warehouseClient.getWarehouseAddressForDelivery();
         DeliveryDto deliveryDto = DeliveryDto.builder()
@@ -84,7 +87,6 @@ public class OrderServiceImpl implements OrderService {
         return OrderMapper.toDto(saved);
     }
 
-
     @Override
     public OrderDto payment(UUID orderId) {
         Order order = orderRepository.findById(orderId)
@@ -104,7 +106,6 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.save(order);
         return OrderMapper.toDto(order);
     }
-
 
     @Override
     public OrderDto paymentFailed(UUID orderId) {
@@ -132,7 +133,6 @@ public class OrderServiceImpl implements OrderService {
 
         return OrderMapper.toDto(order);
     }
-
 
     @Override
     public OrderDto delivery(UUID orderId) {
@@ -182,54 +182,36 @@ public class OrderServiceImpl implements OrderService {
         return OrderMapper.toDto(order);
     }
 
-
     @Override
     public OrderDto calculateTotalCost(UUID orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NoOrderFoundException("No order with %s was found".formatted(orderId)));
 
-        Map<UUID, Long> items = order.getProducts();
-        double productsTotal = 0.0;
-        if (items != null && !items.isEmpty()) {
-            for (Map.Entry<UUID, Long> e : items.entrySet()) {
-                ProductDto p = shoppingClient.getProductById(e.getKey());
-                productsTotal += p.getPrice() * e.getValue();
-            }
+        Double deliveryPrice = order.getDeliveryPrice();
+        if (deliveryPrice == null || deliveryPrice == 0.0) {
+            deliveryPrice = deliveryClient.deliveryCost(OrderMapper.toDto(order));
+            order.setDeliveryPrice(deliveryPrice);
+            orderRepository.save(order);
         }
-        order.setProductPrice(productsTotal);
 
-        double deliveryPrice = order.getDeliveryPrice() != null ? order.getDeliveryPrice() : 0.0;
-        order.setTotalPrice(productsTotal + deliveryPrice);
-        order.setDeliveryPrice(deliveryPrice);
+        double totalPrice = paymentClient.calculateTotalCost(OrderMapper.toDto(order));
+        order.setTotalPrice(totalPrice);
 
         orderRepository.save(order);
         return OrderMapper.toDto(order);
     }
-
-
 
     @Override
     public OrderDto calculateDeliveryCost(UUID orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NoOrderFoundException("No order with %s was found".formatted(orderId)));
-
-        double deliveryPrice = deliveryClient.calculateCost(OrderMapper.toDto(order));
-        if (order.getDeliveryPrice() == null) {
-            order.setDeliveryPrice(0.0);
-        }
-
+        Double deliveryPrice = deliveryClient.deliveryCost(OrderMapper.toDto(order));
         order.setDeliveryPrice(deliveryPrice);
         orderRepository.save(order);
 
         return OrderMapper.toDto(order);
     }
 
-
-
-
-
-
-    //!!!!!!!!!!!!!!!!!!!!! должен вызываться извне - из Warehouse наверное
     @Override
     public OrderDto assembly(UUID orderId) { // наверное только если assembled, можно вызывать delivery в Delivery?
         Order order = orderRepository.findById(orderId)
@@ -238,7 +220,6 @@ public class OrderServiceImpl implements OrderService {
         if (order.getState() == OrderState.ASSEMBLED) {
             return OrderMapper.toDto(order);
         }
-
         if (!EnumSet.of(OrderState.PAID).contains(order.getState())) {
             throw new InvalidOrderStateException("Cannot move to ASSEMBLED from state %s".formatted(order.getState()));
         }
@@ -248,15 +229,22 @@ public class OrderServiceImpl implements OrderService {
                 .products(order.getProducts())
                 .build();
 
-        warehouseClient.checkProductAvailability(cart);
-        warehouseClient.assemble(orderId, cart); // вычитаем остатки и помечаем как собранные на складе
+        try {
+            warehouseClient.assemblyProductsInOrder(
+                    AssemblyProductsForOrderRequest.builder()
+                            .orderId(orderId)
+                            .products(cart.getProducts())
+                            .build()
+            ); // вычитаем остатки и помечаем как собранные на складе
+        } catch (RuntimeException e) {
+            assemblyFailed(orderId);
+        }
         order.setState(OrderState.ASSEMBLED);
         orderRepository.save(order);
 
         return OrderMapper.toDto(order);
     }
 
-    //!!!!!!!!!!!!!!!!!!!!! должен вызываться извне - из Warehouse наверное
     @Override
     public OrderDto assemblyFailed(UUID orderId) {
         Order order = orderRepository.findById(orderId)
@@ -275,13 +263,6 @@ public class OrderServiceImpl implements OrderService {
 
         return OrderMapper.toDto(order);
     }
-
-
-
-
-
-
-
 
     @Override
     public OrderDto productReturn(ProductReturnRequest request) {

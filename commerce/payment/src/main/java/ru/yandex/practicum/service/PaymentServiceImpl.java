@@ -5,8 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.client.OrderClient;
+import ru.yandex.practicum.client.ShoppingStoreClient;
 import ru.yandex.practicum.dto.OrderDto;
 import ru.yandex.practicum.dto.PaymentDto;
+import ru.yandex.practicum.dto.ProductDto;
 import ru.yandex.practicum.enums.PaymentStatus;
 import ru.yandex.practicum.exception.NoOrderFoundException;
 import ru.yandex.practicum.exception.NotEnoughInfoInOrderToCalculateException;
@@ -14,6 +16,7 @@ import ru.yandex.practicum.mapper.PaymentMapper;
 import ru.yandex.practicum.model.Payment;
 import ru.yandex.practicum.repository.PaymentRepository;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -26,6 +29,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final OrderClient orderClient;
+    private final ShoppingStoreClient shoppingClient;
 
     @Override
     @Transactional
@@ -67,12 +71,16 @@ public class PaymentServiceImpl implements PaymentService {
             throw new NotEnoughInfoInOrderToCalculateException("Не указан orderId");
         }
 
-        OrderDto dto = orderClient.calculateTotalCost(order.getOrderId());
-        Double productPrice = dto.getProductPrice();
-        if (productPrice == null) {
-            throw new NotEnoughInfoInOrderToCalculateException(
-                    "OrderService не вернул productPrice для заказа " + order.getOrderId());
+        Map<UUID, Long> items = order.getProducts();
+        double productsTotal = 0.0;
+        if (items != null && !items.isEmpty()) {
+            for (Map.Entry<UUID, Long> e : items.entrySet()) {
+                ProductDto p = shoppingClient.getProductById(e.getKey());
+                productsTotal += p.getPrice() * e.getValue();
+            }
         }
+        order.setProductPrice(productsTotal);
+        Double productPrice = order.getProductPrice();
 
         return round2(productPrice);
     }
@@ -83,11 +91,13 @@ public class PaymentServiceImpl implements PaymentService {
             throw new NotEnoughInfoInOrderToCalculateException("Не указан orderId");
         }
 
-        OrderDto dto = orderClient.calculateTotalCost(order.getOrderId());
+        if (order.getDeliveryPrice() == null || order.getDeliveryPrice() == 0.0) {
+            throw new NotEnoughInfoInOrderToCalculateException("Не указана стоимость доставки заказа");
+        }
 
-        double products = nullSafe(dto.getProductPrice());
+        double products = calculateProductCost(order);
         double fee = products * FEE_RATE;
-        double delivery = nullSafe(dto.getDeliveryPrice());
+        double delivery = nullSafe(order.getDeliveryPrice());
         double total = products + delivery + fee;
 
         return round2(total);

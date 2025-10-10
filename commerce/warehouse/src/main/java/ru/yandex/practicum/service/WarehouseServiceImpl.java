@@ -32,6 +32,7 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 public class WarehouseServiceImpl implements WarehouseService {
+
     private final WarehouseRepository warehouseRepository;
     private final WarehousesItemsRepository warehousesItemsRepository;
     private final AssembledOrdersRepository assembledOrdersRepository;
@@ -262,7 +263,7 @@ public class WarehouseServiceImpl implements WarehouseService {
             throw new IllegalStateException(
                     "No assembled items found for order " + orderId + " to assign deliveryId");
         }
-    } // добавить вызов метода в сервис доставки
+    }
 
     public AddressDto getWarehouseAddressForDelivery() {
 
