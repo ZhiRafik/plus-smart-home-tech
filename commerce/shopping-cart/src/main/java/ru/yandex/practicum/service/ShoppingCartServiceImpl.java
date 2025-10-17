@@ -1,15 +1,18 @@
 package ru.yandex.practicum.service;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PathVariable;
 import ru.yandex.practicum.client.WarehouseClient;
 import ru.yandex.practicum.dto.ShoppingCartDto;
 import ru.yandex.practicum.exception.NoProductsInShoppingCartException;
 import ru.yandex.practicum.exception.NoSuchProductInShoppingCartException;
+import ru.yandex.practicum.exception.ShoppingCartNotFoundException;
 import ru.yandex.practicum.model.ProductCartLink;
 import ru.yandex.practicum.model.ShoppingCart;
 import ru.yandex.practicum.repository.CartRepository;
@@ -191,6 +194,15 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
         }
 
         return buildDto(cartId);
+    }
+
+    @Override
+    public String findUsernameByCartId(UUID cartId) {
+        ShoppingCart cart = cartRepository.findById(cartId)
+                .orElseThrow(() -> new ShoppingCartNotFoundException(
+                        "Shopping cart with id %s not found".formatted(cartId))
+                );
+        return cart.getUsername();
     }
 
     private ShoppingCartDto buildDto(UUID cartId) {

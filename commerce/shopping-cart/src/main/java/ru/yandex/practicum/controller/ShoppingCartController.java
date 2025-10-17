@@ -2,6 +2,7 @@ package ru.yandex.practicum.controller;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -49,5 +50,10 @@ public class ShoppingCartController {
                                                  @RequestBody ChangeProductQuantityRequest request) {
         Map<Long, UUID> productsQuantity = Map.of(request.getNewQuantity(), request.getProductId());;
         return cartService.changeProductQuantity(username, productsQuantity);
+    }
+
+    @GetMapping("/{cartId}/username")
+    public String findUsernameByCartId(@PathVariable @NotNull UUID cartId) {
+        return cartService.findUsernameByCartId(cartId);
     }
 }
